@@ -1,0 +1,179 @@
+.painel-acessibilidade {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-left: 0;
+}
+
+.painel-acessibilidade__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  position: relative;
+  background: rgba(10, 161, 116, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: var(--text-primary);
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.painel-acessibilidade__trigger:hover,
+.painel-acessibilidade__trigger:focus-visible,
+.painel-acessibilidade.open .painel-acessibilidade__trigger {
+  background: rgba(10, 161, 116, 0.2);
+  border-color: rgba(10, 161, 116, 0.45);
+  box-shadow: 0 12px 30px rgba(10, 161, 116, 0.22);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.dark-mode .painel-acessibilidade__trigger {
+  background: rgba(15, 23, 42, 0.45);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+}
+
+.painel-acessibilidade__trigger-icon {
+  transition: transform 0.25s ease;
+}
+
+.painel-acessibilidade.open .painel-acessibilidade__trigger-icon {
+  transform: rotate(90deg);
+}
+
+.painel-acessibilidade__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.painel-acessibilidade__panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: min(360px, 90vw);
+  padding: 20px clamp(16px, 4vw, 26px);
+  border-radius: 20px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  box-shadow: var(--idoso-card-shadow, 0 22px 50px rgba(15, 23, 42, 0.22));
+  transform-origin: top left;
+  transform: translateY(-10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1200;
+}
+
+.painel-acessibilidade__panel[data-open="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dark-mode .painel-acessibilidade__panel {
+  background: var(--bg-secondary);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.painel-acessibilidade__group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.painel-acessibilidade__label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.painel-acessibilidade__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-acessivel {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-acessivel:hover,
+.btn-acessivel:focus-visible,
+.btn-acessivel.active {
+  background: var(--primary-light);
+  border-color: rgba(10, 161, 116, 0.4);
+  color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(10, 161, 116, 0.18);
+}
+
+.painel-acessibilidade__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.painel-acessibilidade__actions .btn-acessivel {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: transparent;
+}
+
+.painel-acessibilidade__actions .btn-acessivel:hover,
+.painel-acessibilidade__actions .btn-acessivel:focus-visible {
+  background: var(--primary-hover);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(10, 161, 116, 0.26);
+}
+
+.painel-acessibilidade__actions .btn-acessivel.secundario {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.painel-acessibilidade__actions .btn-acessivel.secundario:hover,
+.painel-acessibilidade__actions .btn-acessivel.secundario:focus-visible {
+  background: var(--primary-light);
+  color: var(--primary-color);
+}
+
+@media (max-width: 480px) {
+  .painel-acessibilidade__trigger {
+    width: 44px;
+    height: 44px;
+  }
+
+  .painel-acessibilidade__panel {
+    width: min(320px, 92vw);
+    right: unset;
+    left: 0;
+  }
+
+  .painel-acessibilidade__actions {
+    justify-content: flex-start;
+  }
+}

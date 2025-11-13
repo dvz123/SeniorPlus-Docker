@@ -1,0 +1,2 @@
+ALTER TABLE idosos
+    MODIFY imc VARCHAR(64) NULL;

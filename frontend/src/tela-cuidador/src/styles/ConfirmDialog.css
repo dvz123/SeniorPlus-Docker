@@ -1,0 +1,136 @@
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fade-in 0.2s ease-out;
+}
+
+.confirm-dialog {
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  animation: scale-in 0.2s ease-out;
+  overflow: hidden;
+}
+
+.confirm-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.confirm-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.confirm-danger h3 {
+  color: var(--danger-color);
+}
+
+.confirm-warning h3 {
+  color: var(--warning-color);
+}
+
+.confirm-content {
+  padding: 20px;
+}
+
+.confirm-content p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.confirm-actions {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.confirm-cancel {
+  padding: 8px 16px;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirm-cancel:hover {
+  background-color: var(--bg-primary);
+}
+
+.confirm-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirm-danger-button {
+  background-color: var(--danger-color);
+}
+
+.confirm-danger-button:hover {
+  background-color: #dc2626;
+}
+
+.confirm-warning-button {
+  background-color: var(--warning-color);
+}
+
+.confirm-warning-button:hover {
+  background-color: #d97706;
+}
+
+.confirm-primary-button {
+  background-color: var(--primary-color);
+}
+
+.confirm-primary-button:hover {
+  background-color: var(--primary-hover);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirm-dialog {
+    width: 95%;
+  }
+}

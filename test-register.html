@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Registro</title>
+</head>
+<body>
+    <h1>Teste de Registro - Senior+</h1>
+    <button onclick="testarRegistro()">Testar Registro</button>
+    <div id="resultado"></div>
+
+    <script>
+        async function testarRegistro() {
+            const dados = {
+                nome: "Teste Frontend",
+                cpf: "98765432100",
+                email: "testefrontend@email.com",
+                senha: "senha123",
+                tipoUsuario: "Idoso"
+            };
+
+            console.log("Enviando dados:", dados);
+
+            try {
+                const response = await fetch('http://localhost:8080/api/v1/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                console.log("Status:", response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erro ${response.status}: ${errorText}`);
+                }
+
+                const resultado = await response.json();
+                console.log("Sucesso!", resultado);
+                document.getElementById('resultado').innerHTML = `
+                    <h2 style="color: green">✓ Registro realizado com sucesso!</h2>
+                    <pre>${JSON.stringify(resultado, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById('resultado').innerHTML = `
+                    <h2 style="color: red">✗ Erro no registro</h2>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

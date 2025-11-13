@@ -1,0 +1,360 @@
+.events-card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  background-color: white;
+}
+
+.events-header {
+  padding: 20px 24px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.events-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0aa174;
+  font-weight: 600;
+  font-size: 20px;
+  margin: 0;
+}
+
+.events-title-icon {
+  height: 20px;
+  width: 20px;
+}
+
+.view-all-button {
+  background: none;
+  border: none;
+  color: #0aa174;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.view-all-button:hover {
+  text-decoration: underline;
+}
+
+.events-content {
+  padding: 12px 24px 24px;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.no-events-message {
+  padding: 16px;
+  text-align: center;
+  color: #64748b;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.event-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.event-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.event-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.event-icon-atividade,
+.event-icon-consulta,
+.event-icon-social,
+.event-icon-medicação,
+.event-icon-outro {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.event-icon-atividade {
+  background-color: #0aa174;
+}
+
+.event-icon-consulta {
+  background-color: #3b82f6;
+}
+
+.event-icon-social {
+  background-color: #8b5cf6;
+}
+
+.event-icon-medicação {
+  background-color: #ef4444;
+}
+
+.event-icon-outro {
+  background-color: #64748b;
+}
+
+.event-icon {
+  height: 20px;
+  width: 20px;
+}
+
+.event-name {
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0;
+}
+
+.event-time {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.event-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-badge-atividade,
+.event-badge-consulta,
+.event-badge-social,
+.event-badge-medicação,
+.event-badge-outro {
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 9999px;
+}
+
+.event-badge-atividade {
+  background-color: #0aa174;
+}
+
+.event-badge-consulta {
+  background-color: #3b82f6;
+}
+
+.event-badge-social {
+  background-color: #8b5cf6;
+}
+
+.event-badge-medicação {
+  background-color: #ef4444;
+}
+
+.event-badge-outro {
+  background-color: #64748b;
+}
+
+.delete-event-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.delete-event-btn:hover {
+  color: #ef4444;
+  background-color: #fee2e2;
+}
+
+.add-event-button {
+  width: 100%;
+  margin-top: 8px;
+  border: 2px dashed #0aa174;
+  color: #0aa174;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: none;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-event-button:hover {
+  background-color: #e6f7f2;
+}
+
+.add-event-icon {
+  height: 16px;
+  width: 16px;
+  margin-right: 8px;
+}
+
+.form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.form-container {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.form-container h2 {
+  padding: 20px 24px;
+  margin: 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Dark mode para .events-card */
+.dark-mode .events-card {
+  background-color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+}
+
+/* Header e Título */
+.dark-mode .events-title {
+  color: #0aa174;
+}
+
+.dark-mode .view-all-button {
+  color: #0aa174;
+}
+
+.dark-mode .view-all-button:hover {
+  text-decoration: underline;
+}
+
+/* Conteúdo */
+.dark-mode .no-events-message {
+  background-color: #334155;
+  color: #cbd5e1;
+}
+
+.dark-mode .events-content {
+  color: #cbd5e1;
+}
+
+/* Lista e itens */
+.dark-mode .event-item {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.dark-mode .event-item:hover {
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+}
+
+/* Texto dos eventos */
+.dark-mode .event-name {
+  color: #f1f5f9;
+}
+
+.dark-mode .event-time {
+  color: #94a3b8;
+}
+
+/* Botão de deletar */
+.dark-mode .delete-event-btn {
+  color: #94a3b8;
+}
+
+.dark-mode .delete-event-btn:hover {
+  color: #ef4444;
+  background-color: #7f1d1d;
+}
+
+/* Botão de adicionar evento */
+.dark-mode .add-event-button {
+  border-color: #0aa174;
+  color: #0aa174;
+}
+
+.dark-mode .add-event-button:hover {
+  background-color: #0f766e;
+}
+
+/* Modal/formulário */
+.dark-mode .form-container {
+  background-color: #1e293b;
+}
+
+.dark-mode .form-container h2 {
+  border-bottom-color: #475569;
+  color: #f1f5f9;
+}
+
+/* Ícones de eventos - mantêm as cores originais para contraste */
+.event-icon-atividade {
+  background-color: #0aa174;
+}
+.event-icon-consulta {
+  background-color: #3b82f6;
+}
+.event-icon-social {
+  background-color: #8b5cf6;
+}
+.event-icon-medicação {
+  background-color: #ef4444;
+}
+.event-icon-outro {
+  background-color: #64748b;
+}
+
+/* Badges - mantêm as cores */
+.event-badge-atividade {
+  background-color: #0aa174;
+}
+.event-badge-consulta {
+  background-color: #3b82f6;
+}
+.event-badge-social {
+  background-color: #8b5cf6;
+}
+.event-badge-medicação {
+  background-color: #ef4444;
+}
+.event-badge-outro {
+  background-color: #64748b;
+}

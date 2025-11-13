@@ -1,0 +1,418 @@
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.page-header p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.link-card {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.link-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.link-card-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.link-counter {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.link-card-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.select-wrapper label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.select-wrapper select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.link-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.primary-button,
+.outline-button,
+.danger-button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  border: none;
+}
+
+.primary-button {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.primary-button:hover:enabled {
+  background: var(--primary-hover);
+}
+
+.outline-button {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+}
+
+.outline-button:hover:enabled {
+  background: rgba(10, 161, 116, 0.08);
+}
+
+.danger-button {
+  background: rgba(220, 38, 38, 0.1);
+  color: #b91c1c;
+}
+
+.danger-button:hover:enabled {
+  background: rgba(220, 38, 38, 0.18);
+}
+
+.link-existing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.link-existing-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.link-existing-row input {
+  flex: 1 1 220px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.helper-text {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.mensagem {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-weight: 500;
+}
+
+.mensagem.success {
+  background: var(--success-light);
+  color: var(--success-color);
+}
+
+.mensagem.error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.update-form {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  /* Allow fields to render fully without clipping on the right */
+  overflow: visible;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  /* Improve visual separation and breathing room */
+  padding: 24px;
+  border: 1px solid var(--card-border);
+  box-sizing: border-box;
+  max-width: 1150px;
+  margin: 0 auto 32px;
+}
+
+.form-section {
+  padding: 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.form-section:last-child {
+  border-bottom: none;
+}
+
+.form-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.form-subsection {
+  margin-bottom: 24px;
+}
+
+.form-subsection h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+}
+
+.form-grid {
+  /* Base mobile: single column */
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
+  grid-auto-rows: minmax(min-content, auto);
+  gap: 20px;
+  column-gap: 20px;
+}
+
+/* Medium screens: two columns */
+@media (min-width: 640px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
+}
+
+/* Large screens: three columns (requested layout) */
+@media (min-width: 900px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
+  }
+}
+
+/* Wider desktops: keep three columns but allow comfortable max width */
+@media (min-width: 1400px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(300px, 1fr));
+    gap: 18px 24px;
+  }
+}
+
+.form-group {
+  margin-bottom: 8px;
+}
+
+.form-group textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  transition: border-color 0.2s ease, background-color 0.3s ease;
+}
+
+/* Subtle helper/hint text */
+.field-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* IMC hint styled as a soft badge */
+.imc-hint {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* Improve numeric inputs alignment and accessibility */
+.form-group input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.form-group input[type="number"]::-webkit-outer-spin-button,
+.form-group input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Make select and inputs larger on touch devices */
+@media (max-width: 480px) {
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 12px 14px;
+    font-size: 16px; /* better tap targets */
+  }
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(10, 161, 116, 0.1);
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: var(--primary-light);
+  border-radius: 9999px;
+  font-size: 14px;
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.remove-tag {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.remove-tag:hover {
+  color: var(--danger-color);
+}
+
+.add-tag-container {
+  display: flex;
+  gap: 8px;
+}
+
+.add-tag-container input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+.add-tag-button {
+  padding: 8px 12px;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-tag-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.form-actions {
+  padding: 8px 0 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-button {
+  padding: 12px 24px;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-button:hover {
+  background-color: var(--primary-hover);
+}
+
+@media (max-width: 480px) {
+  .form-section {
+    padding: 16px;
+  }
+
+  .add-tag-container {
+    flex-direction: column;
+  }
+
+  .form-actions {
+    padding: 16px;
+  }
+}

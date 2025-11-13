@@ -1,0 +1,554 @@
+/* Use global container sizing; avoid conflicting local overrides */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.main { padding: 24px 0; }
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: var(--heading-color); }
+
+.page-header p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.patient-info {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--bg-accent);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.patient-name,
+.patient-age {
+  display: flex;
+  align-items: center;
+  color: var(--text-color);
+}
+
+.report-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: var(--text-color);
+}
+
+.tab-button.active {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.report-controls { margin-bottom: 24px; padding: 16px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 20px var(--shadow-color); }
+
+.report-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.export-button {
+  margin-left: auto;
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.export-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.export-button:disabled {
+  background-color: var(--border-color);
+  cursor: not-allowed;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card { padding: 20px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; text-align: center; box-shadow: 0 4px 20px var(--shadow-color); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+
+.summary-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.summary-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-bottom: 24px; }
+
+.chart-card { padding: 20px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; position: relative; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px var(--shadow-color); }
+
+.chart-card h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+  padding: 8px 12px 4px;
+  color: var(--heading-color);
+  line-height: 1.2;
+  position: relative;
+}
+
+.chart-container { height: 300px; position: relative; background: var(--bg-primary); border-radius: 8px; padding: 8px 12px 12px; border: 1px solid var(--border-color); margin-top: 4px; }
+.chart-container canvas { width: 100%; height: 100%; display: block; }
+
+/* Legend styling for canvas-rendered charts */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chart-legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+}
+
+.report-content { margin-top: 24px; background-color: var(--bg-secondary); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 20px var(--shadow-color); }
+
+.report-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--text-color);
+}
+
+.category-chart {
+  margin-bottom: 2rem;
+}
+
+.chart-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chart-label {
+  width: 150px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-color);
+}
+
+.category-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.category-dot.atividade {
+  background-color: #0aa174;
+}
+
+.category-dot.consulta {
+  background-color: #3b82f6;
+}
+
+.category-dot.social {
+  background-color: #8b5cf6;
+}
+
+.category-dot.medicação {
+  background-color: #ef4444;
+}
+
+.chart-bar-container {
+  flex: 1;
+  height: 24px;
+  background-color: var(--bg-color);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.chart-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.chart-bar.atividade {
+  background-color: #0aa174;
+}
+
+.chart-bar.consulta {
+  background-color: #3b82f6;
+}
+
+.chart-bar.social {
+  background-color: #8b5cf6;
+}
+
+.chart-bar.medicação {
+  background-color: #ef4444;
+}
+
+.chart-value {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.category-details {
+  margin-top: 2rem;
+}
+
+.category-section {
+  margin-bottom: 2rem;
+}
+
+.category-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-color);
+}
+
+.category-indicator {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.category-indicator.atividade {
+  background-color: #0aa174;
+}
+
+.category-indicator.consulta {
+  background-color: #3b82f6;
+}
+
+.category-indicator.social {
+  background-color: #8b5cf6;
+}
+
+.category-indicator.medicação {
+  background-color: #ef4444;
+}
+
+.category-events {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.event-item {
+  padding: 1rem;
+  background-color: var(--bg-accent);
+  border-radius: 0.5rem;
+}
+
+.event-date {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.event-title {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.event-time {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.date-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.date-section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-color);
+  text-transform: capitalize;
+}
+
+.date-events-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.event-card-small {
+  display: flex;
+  background-color: var(--bg-accent);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.event-category-small {
+  width: 8px;
+}
+
+.event-category-small.atividade {
+  background-color: #0aa174;
+}
+
+.event-category-small.consulta {
+  background-color: #3b82f6;
+}
+
+.event-category-small.social {
+  background-color: #8b5cf6;
+}
+
+.event-category-small.medicação {
+  background-color: #ef4444;
+}
+
+.event-details-small {
+  padding: 1rem;
+  flex: 1;
+}
+
+.event-details-small h4 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.event-time-small {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.event-location-small {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.no-data { padding: 24px; text-align: center; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; }
+
+.no-data p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.medication-adherence-table {
+  overflow-x: auto;
+}
+
+.medication-adherence-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.medication-adherence-table th,
+.medication-adherence-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.medication-adherence-table th {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.medication-adherence-table td {
+  color: var(--text-color);
+}
+
+.adherence-bar-container {
+  width: 100%;
+  height: 20px;
+  background-color: var(--bg-color);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.adherence-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.adherence-bar-container span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-accent);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 1.5rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: var(--border-color);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .report-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .export-button {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .summary-card {
+    padding: 1rem;
+  }
+
+  .summary-value {
+    font-size: 2rem;
+  }
+
+  .chart-card {
+    padding: 1rem;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+
+  .medication-adherence-table th,
+  .medication-adherence-table td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Dark mode support */
+.dark-mode .chart-card,
+.dark-mode .summary-card,
+.dark-mode .report-controls,
+.dark-mode .event-item,
+.dark-mode .event-card-small,
+.dark-mode .no-data,
+.dark-mode .back-button,
+.dark-mode .patient-info {
+  background-color: var(--bg-accent);
+}
+
+.dark-mode .chart-container {
+  background: rgba(26, 37, 55, 0.88);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.dark-mode .chart-bar-container,
+.dark-mode .adherence-bar-container {
+  background-color: var(--bg-color);
+}
+
+.dark-mode .filter-group select,
+.dark-mode .filter-group input {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.dark-mode canvas { filter: none; background: transparent; }

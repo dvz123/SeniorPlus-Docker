@@ -1,0 +1,68 @@
+.empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  color: #8c8c8c;
+}
+
+/* Layout container similar to tela-cuidador for consistency */
+.container {
+  min-height: 100vh;
+  background-color: var(--bg-primary, #f8f9fa);
+}
+
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.sending-spinner {
+  min-height: auto;
+}
+
+.med-card.empty {
+  padding: 16px;
+  text-align: center;
+  color: #8c8c8c;
+}
+
+.custom-checkbox {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.custom-checkbox:hover {
+  opacity: 0.8;
+}
+
+.check-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.custom-checkbox input:checked ~ .check-icon {
+  opacity: 1;
+}
+
+/* Accessible large buttons for elderly users */
+.large-button {
+  display: inline-block;
+  padding: 14px 22px;
+  font-size: 18px;
+  border-radius: 12px;
+  background-color: #00b170;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.large-button:focus {
+  outline: 3px solid #9ff0c9;
+}

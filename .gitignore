@@ -1,0 +1,20 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+
+# Dependências do Node (Front-end)
+/frontend/node_modules
+
+# Arquivos de Build do Frontend (Gerados automaticamente)
+/frontend/build
+/frontend/dist
+
+# Dependências do Maven/Java (Back-end)
+/backend/target/
+*.log
+
+# Arquivos de IDE e Sistema
+.idea/
+.vscode/
+# Arquivos de sistema Windows
+desktop.ini

@@ -1,0 +1,11 @@
+.main-with-header {
+  padding-top: 64px; /* Altura do header */
+  min-height: calc(100vh - 64px);
+}
+
+@media (max-width: 768px) {
+  .main-with-header {
+    padding-top: 56px; /* Altura do header em telas menores */
+    min-height: calc(100vh - 56px);
+  }
+}

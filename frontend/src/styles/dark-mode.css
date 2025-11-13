@@ -1,0 +1,1187 @@
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --primary-color: #0aa174;
+  --primary-light: #e6f7f2;
+  --primary-hover: #088f66;
+  --danger-color: #ef4444;
+  --danger-light: #fee2e2;
+  --info-color: #3b82f6;
+  --info-light: #eff6ff;
+  --warning-color: #f59e0b;
+  --warning-light: #fef3c7;
+  --success-color: #10b981;
+  --success-light: #d1fae5;
+  --border-color: #e2e8f0;
+  --shadow-color: rgba(0, 0, 0, 0.05);
+  --shadow-hover: rgba(0, 0, 0, 0.1);
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --input-text: #1e293b;
+  --input-placeholder: #94a3b8;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --heading-color: #1e293b;
+  --subheading-color: #475569;
+  --label-color: #64748b;
+  --value-color: #1e293b;
+
+  /* Toast container */
+  --toast-container-z-index: 9999;
+}
+
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark-mode {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --primary-color: #0aa174;
+  --primary-light: rgba(10, 161, 116, 0.15);
+  --primary-hover: #0cc18a;
+  --danger-color: #f87171;
+  --danger-light: rgba(248, 113, 113, 0.15);
+  --info-color: #60a5fa;
+  --info-light: rgba(96, 165, 250, 0.15);
+  --warning-color: #fbbf24;
+  --warning-light: rgba(251, 191, 36, 0.15);
+  --success-color: #34d399;
+  --success-light: rgba(52, 211, 153, 0.15);
+  --border-color: #334155;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --shadow-hover: rgba(0, 0, 0, 0.4);
+  --input-bg: #1e293b;
+  --input-border: #475569;
+  --input-text: #f1f5f9;
+  --input-placeholder: #94a3b8;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --heading-color: #f1f5f9;
+  --subheading-color: #e2e8f0;
+  --label-color: #cbd5e1;
+  --value-color: #f1f5f9;
+  color-scheme: dark;
+
+  /* Modo escuro - Estilos específicos */
+  /* Cores de fundo */
+  --background-color: #121212;
+  --background-light: #1e1e1e;
+  --background-dark: #2a2a2a;
+  --card-background: #1e1e1e;
+  --modal-background: #1e1e1e;
+  --dropdown-background: #1e1e1e;
+
+  /* Cores de texto */
+  --text-color: #f0f0f0;
+  --text-light: #d0d0d0;
+  --text-lighter: #a0a0a0;
+  --text-muted: #888888;
+
+  /* Cores de borda */
+  --border-color: #3a3a3a;
+  --border-light: #444444;
+  --divider-color: #333333;
+
+  /* Cores de componentes */
+  --input-background: #2a2a2a;
+  --input-border: #3a3a3a;
+  --input-text: #f0f0f0;
+  --input-placeholder: #888888;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Transições suaves para todos os elementos */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark-mode .header {
+  background-color: var(--bg-secondary);
+  box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+.dark-mode .sidebar {
+  background-color: var(--bg-secondary);
+  box-shadow: -2px 0 10px var(--shadow-color);
+}
+
+.dark-mode .sidebar-header {
+  border-bottom-color: var(--border-color);
+}
+
+.dark-mode .user-info {
+  border-bottom-color: var(--border-color);
+}
+
+.dark-mode .nav-item:hover {
+  background-color: var(--primary-light);
+}
+
+.dark-mode .profile-card,
+.dark-mode .events-card,
+.dark-mode .medication-card-component,
+.dark-mode .quick-access-button,
+.dark-mode .medication-card,
+.dark-mode .today-medications,
+.dark-mode .modal,
+.dark-mode .form-container,
+.dark-mode .no-medications,
+.dark-mode .no-events,
+.dark-mode .update-form,
+.dark-mode .report-content,
+.dark-mode .summary-card,
+.dark-mode .calendar-container,
+.dark-mode .day-details {
+  background-color: var(--bg-secondary);
+  box-shadow: 0 4px 20px var(--shadow-color);
+}
+
+.dark-mode .profile-avatar-fallback {
+  background-color: var(--primary-light);
+}
+
+.dark-mode .event-item,
+.dark-mode .medication-item,
+.dark-mode .today-item,
+.dark-mode .history-item,
+.dark-mode .event-card-small {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+.dark-mode input,
+.dark-mode textarea,
+.dark-mode select {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--input-text);
+}
+
+.dark-mode input::placeholder,
+.dark-mode textarea::placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .modal-header,
+.dark-mode .form-container h2,
+.dark-mode .form-section {
+  border-bottom-color: var(--border-color);
+}
+
+.dark-mode .tabs {
+  border-bottom-color: var(--border-color);
+}
+
+.dark-mode .tab {
+  color: var(--text-secondary);
+}
+
+.dark-mode .tab.active {
+  color: var(--primary-color);
+}
+
+.dark-mode .medication-status {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.dark-mode .medication-card.paused .medication-status {
+  background-color: var(--warning-light);
+  color: var(--warning-color);
+}
+
+.dark-mode .medication-card.discontinued .medication-status {
+  background-color: rgba(100, 116, 139, 0.15);
+  color: var(--text-secondary);
+}
+
+.dark-mode .today-time {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.dark-mode .record-btn,
+.dark-mode .today-record-btn {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.dark-mode .history-btn {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.dark-mode .edit-btn {
+  background-color: var(--info-light);
+  color: var(--info-color);
+}
+
+.dark-mode .delete-btn {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.dark-mode .history-status.taken {
+  background-color: var(--success-light);
+  color: var(--success-color);
+}
+
+.dark-mode .history-status.not-taken {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.dark-mode .history-notes {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6 {
+  color: var(--heading-color);
+}
+
+.dark-mode p,
+.dark-mode span,
+.dark-mode div {
+  color: var(--text-primary);
+}
+
+.dark-mode .date-header,
+.dark-mode .events-title,
+.dark-mode .medication-card-title,
+.dark-mode .quick-access-title,
+.dark-mode .today-medications h2,
+.dark-mode .page-header h1,
+.dark-mode .form-section h2,
+.dark-mode .form-subsection h3,
+.dark-mode .report-content h2,
+.dark-mode .calendar-title,
+.dark-mode .day-details-title {
+  color: var(--heading-color);
+}
+
+.dark-mode .page-header p {
+  color: var(--text-secondary);
+}
+
+.dark-mode .back-button {
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.dark-mode .back-button:hover {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.dark-mode .tag {
+  background-color: var(--primary-light);
+  color: var(--text-primary);
+}
+
+.dark-mode .add-tag-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dark-mode .add-tag-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.dark-mode .save-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dark-mode .save-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.dark-mode .chart-bar-container {
+  background-color: var(--bg-primary);
+}
+
+.dark-mode .chart-value {
+  color: var(--text-primary);
+}
+
+.dark-mode .calendar-day {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.dark-mode .calendar-day:hover {
+  background-color: var(--primary-light);
+}
+
+.dark-mode .calendar-day.today {
+  background-color: var(--primary-light);
+}
+
+.dark-mode .calendar-day.selected {
+  background-color: var(--primary-light);
+  border-color: var(--primary-color);
+}
+
+.dark-mode .day-number {
+  color: var(--text-primary);
+}
+
+.dark-mode .today .day-number {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dark-mode .event-indicator {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.dark-mode .medication-indicator {
+  background-color: var(--info-light);
+  color: var(--info-color);
+}
+
+.dark-mode .toast-container {
+  z-index: var(--toast-container-z-index);
+}
+
+.dark-mode .info-label {
+  color: var(--label-color);
+}
+
+.dark-mode .info-value {
+  color: var(--value-color);
+}
+
+.dark-mode .event-title,
+.dark-mode .event-time,
+.dark-mode .event-location,
+.dark-mode .event-description,
+.dark-mode .medication-name,
+.dark-mode .medication-dosage,
+.dark-mode .today-name,
+.dark-mode .today-dosage {
+  color: var(--text-primary);
+}
+
+.dark-mode .event-category,
+.dark-mode .event-category-small {
+  color: var(--text-primary);
+}
+
+.dark-mode .profile-info-label {
+  color: var(--label-color);
+}
+
+.dark-mode .profile-info-value {
+  color: var(--value-color);
+}
+
+.dark-mode .form-group label {
+  color: var(--label-color);
+}
+
+.dark-mode .settings-card {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.dark-mode .settings-section h2 {
+  color: var(--heading-color);
+}
+
+.dark-mode .settings-option {
+  border-bottom-color: var(--border-color);
+}
+
+.dark-mode .settings-option-label {
+  color: var(--heading-color);
+}
+
+.dark-mode .settings-option-description {
+  color: var(--text-secondary);
+}
+
+.dark-mode .toggle-switch {
+  background-color: var(--border-color);
+}
+
+.dark-mode .toggle-switch.active {
+  background-color: var(--primary-color);
+}
+
+.dark-mode .toggle-switch-slider {
+  background-color: var(--bg-primary);
+}
+
+.dark-mode .settings-select {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--input-text);
+}
+
+.dark-mode .settings-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dark-mode .settings-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.dark-mode .settings-button.secondary {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.dark-mode .settings-button.secondary:hover {
+  background-color: var(--bg-secondary);
+}
+
+.dark-mode .settings-button.danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.dark-mode .settings-button.danger:hover {
+  background-color: #f43f5e;
+}
+
+.dark-mode .quick-access-button span {
+  color: var(--text-primary);
+}
+
+.dark-mode .quick-access-title {
+  color: var(--heading-color);
+}
+
+.dark-mode .profile-info-item span {
+  color: var(--text-primary);
+}
+
+.dark-mode .profile-name {
+  color: var(--heading-color);
+}
+
+.dark-mode .profile-info-label {
+  color: var(--label-color);
+}
+
+.dark-mode .profile-info-value {
+  color: var(--value-color);
+}
+
+.dark-mode .no-data {
+  color: var(--text-secondary);
+}
+
+.dark-mode .no-data-message {
+  color: var(--text-secondary);
+}
+
+.dark-mode .emergency-nav-item {
+  color: var(--danger-color);
+}
+
+.dark-mode .emergency-button {
+  color: var(--danger-color);
+}
+
+.dark-mode .emergency-button svg {
+  color: var(--danger-color);
+}
+
+.dark-mode .notification-item {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.dark-mode .notification-title {
+  color: var(--heading-color);
+}
+
+.dark-mode .notification-message {
+  color: var(--text-primary);
+}
+
+.dark-mode .notification-time {
+  color: var(--text-secondary);
+}
+
+.dark-mode .notification-unread {
+  background-color: rgba(10, 161, 116, 0.1);
+}
+
+.dark-mode .auth-container {
+  background-color: var(--bg-primary);
+}
+
+.dark-mode .auth-card {
+  background-color: var(--bg-secondary);
+  box-shadow: 0 4px 20px var(--shadow-color);
+}
+
+.dark-mode .auth-title {
+  color: var(--heading-color);
+}
+
+.dark-mode .auth-subtitle {
+  color: var(--text-secondary);
+}
+
+.dark-mode .auth-link {
+  color: var(--primary-color);
+}
+
+.dark-mode .auth-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dark-mode .auth-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.dark-mode .auth-divider {
+  background-color: var(--border-color);
+}
+
+.dark-mode .auth-social-button {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.dark-mode .auth-social-button:hover {
+  background-color: var(--bg-secondary);
+}
+
+.dark-mode .auth-error {
+  color: var(--danger-color);
+}
+
+.dark-mode .auth-success {
+  color: var(--success-color);
+}
+
+.dark-mode .auth-input-icon {
+  color: var(--text-secondary);
+}
+
+.dark-mode .auth-password-toggle {
+  color: var(--text-secondary);
+}
+
+.dark-mode .auth-password-toggle:hover {
+  color: var(--text-primary);
+}
+
+.dark-mode .auth-remember-me {
+  color: var(--text-primary);
+}
+
+.dark-mode .auth-forgot-password {
+  color: var(--primary-color);
+}
+
+.dark-mode .auth-register-link {
+  color: var(--primary-color);
+}
+
+.dark-mode .auth-login-link {
+  color: var(--primary-color);
+}
+
+.dark-mode .auth-verification-code {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.dark-mode .auth-verification-code:focus {
+  border-color: var(--primary-color);
+}
+
+.dark-mode .auth-verification-code.error {
+  border-color: var(--danger-color);
+}
+
+.dark-mode .auth-verification-code.success {
+  border-color: var(--success-color);
+}
+
+.dark-mode .auth-verification-code-container {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+.dark-mode .auth-verification-code-container.error {
+  border-color: var(--danger-color);
+}
+
+.dark-mode .auth-verification-code-container.success {
+  border-color: var(--success-color);
+}
+
+.dark-mode .auth-verification-code-input {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.dark-mode .auth-verification-code-input:focus {
+  border-color: var(--primary-color);
+}
+
+.dark-mode .auth-verification-code-input.error {
+  border-color: var(--danger-color);
+}
+
+.dark-mode .auth-verification-code-input.success {
+  border-color: var(--success-color);
+}
+
+.dark-mode .auth-verification-code-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-webkit-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-moz-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input:-ms-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input:-moz-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-ms-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-webkit-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-moz-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input:-ms-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input:-moz-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-ms-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-webkit-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-moz-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input:-ms-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input:-moz-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-ms-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-webkit-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-moz-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input:-ms-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input:-moz-placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .auth-verification-code-input::-ms-input-placeholder {
+  color: var(--input-placeholder);
+}
+
+/* Estilos gerais para o modo escuro */
+.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* Cabeçalho no modo escuro */
+.dark-mode .app-header {
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+
+.dark-mode .logo-text {
+  color: #ffffff;
+}
+
+/* Sidebar no modo escuro */
+.dark-mode .sidebar {
+  background-color: #1e1e1e;
+  border-right: 1px solid #333;
+}
+
+.dark-mode .sidebar-item {
+  color: #e0e0e0;
+}
+
+.dark-mode .sidebar-item:hover,
+.dark-mode .sidebar-item.active {
+  background-color: #333;
+}
+
+/* Cards no modo escuro */
+.dark-mode .card {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+}
+
+.dark-mode .card-title {
+  color: #ffffff;
+}
+
+/* Formulários no modo escuro */
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  color: #e0e0e0;
+}
+
+.dark-mode input:focus,
+.dark-mode select:focus,
+.dark-mode textarea:focus {
+  border-color: #666;
+}
+
+.dark-mode label {
+  color: #cccccc;
+}
+
+.dark-mode button {
+  background-color: #333;
+  color: #e0e0e0;
+}
+
+.dark-mode button:hover {
+  background-color: #444;
+}
+
+/* Tabelas no modo escuro */
+.dark-mode table {
+  border-color: #333;
+}
+
+.dark-mode th {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+.dark-mode td {
+  border-color: #333;
+}
+
+.dark-mode tr:nth-child(even) {
+  background-color: #1a1a1a;
+}
+
+/* Links no modo escuro */
+.dark-mode a {
+  color: #4da6ff;
+}
+
+.dark-mode a:hover {
+  color: #66b3ff;
+}
+
+/* Mensagens de erro no modo escuro */
+.dark-mode .error-message {
+  color: #ff6b6b;
+}
+
+/* Mensagens de sucesso no modo escuro */
+.dark-mode .success-message {
+  color: #4caf50;
+}
+
+/* Mensagens de alerta no modo escuro */
+.dark-mode .warning-message {
+  color: #ffb74d;
+}
+
+/* Mensagens de informação no modo escuro */
+.dark-mode .info-message {
+  color: #4da6ff;
+}
+
+/* Correção para as alergias no modo escuro */
+.dark-mode .allergy-tag {
+  background-color: rgba(255, 99, 71, 0.7);
+  color: #ffffff;
+  border: 1px solid rgba(255, 99, 71, 0.9);
+}
+
+/* Correção para a mensagem "nenhum evento hoje" no modo escuro */
+.dark-mode .no-events,
+.dark-mode .no-medications,
+.dark-mode .no-data-message {
+  background-color: #2a2a2a;
+  color: #cccccc;
+  border: 1px solid #444;
+}
+
+.dark-mode .no-events i,
+.dark-mode .no-medications i,
+.dark-mode .no-data-icon {
+  color: #666;
+}
+
+/* Correção para os cards de medicamentos e eventos no modo escuro */
+.dark-mode .medication-card,
+.dark-mode .events-card {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+}
+
+.dark-mode .medication-item,
+.dark-mode .event-item {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+}
+
+.dark-mode .medication-name,
+.dark-mode .event-title {
+  color: #ffffff;
+}
+
+.dark-mode .medication-dosage,
+.dark-mode .event-time,
+.dark-mode .event-location {
+  color: #cccccc;
+}
+
+/* Correção para as telas de autenticação no modo escuro */
+.dark-mode.auth-page {
+  background-color: #121212;
+}
+
+.dark-mode .auth-container {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+}
+
+.dark-mode .auth-header h1,
+.dark-mode .auth-header h2 {
+  color: #ffffff;
+}
+
+.dark-mode .auth-header p {
+  color: #cccccc;
+}
+
+.dark-mode .auth-button {
+  background-color: #4da6ff;
+  color: #ffffff;
+}
+
+.dark-mode .auth-button:hover {
+  background-color: #66b3ff;
+}
+
+.dark-mode .auth-link {
+  color: #4da6ff;
+}
+
+.dark-mode .auth-link:hover {
+  color: #66b3ff;
+}
+
+/* Correção para a página de emergência no modo escuro */
+.dark-mode .emergency-container {
+  background-color: #1e1e1e;
+}
+
+.dark-mode .emergency-section {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+}
+
+.dark-mode .emergency-section h2 {
+  color: #ffffff;
+}
+
+.dark-mode .emergency-service-button,
+.dark-mode .personal-contact {
+  background-color: #333;
+  border: 1px solid #444;
+}
+
+.dark-mode .emergency-service-button:hover,
+.dark-mode .personal-contact:hover {
+  background-color: #444;
+}
+
+.dark-mode .service-name,
+.dark-mode .contact-info h3 {
+  color: #ffffff;
+}
+
+.dark-mode .service-number,
+.dark-mode .contact-relation,
+.dark-mode .contact-number {
+  color: #cccccc;
+}
+
+.dark-mode .call-button {
+  background-color: #4da6ff;
+  color: #ffffff;
+}
+
+.dark-mode .call-button:hover {
+  background-color: #66b3ff;
+}
+
+.dark-mode .medical-info {
+  background-color: #2a2a2a;
+}
+
+.dark-mode .info-item h3 {
+  color: #ffffff;
+}
+
+.dark-mode .info-item p {
+  color: #cccccc;
+}
+
+.dark-mode .tag {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+
+.dark-mode .sos-button {
+  background-color: #ff6b6b;
+  color: #ffffff;
+}
+
+.dark-mode .sos-button:hover {
+  background-color: #ff8c8c;
+}
+
+/* Ajustes específicos para componentes no modo escuro */
+.dark-mode .card,
+.dark-mode .sidebar,
+.dark-mode .header,
+.dark-mode .modal-content,
+.dark-mode .dropdown-menu {
+  background-color: var(--card-background);
+  border-color: var(--border-color);
+}
+
+.dark-mode .form-control,
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea {
+  background-color: var(--input-background);
+  border-color: var(--input-border);
+  color: var(--input-text);
+}
+
+.dark-mode .form-control::placeholder,
+.dark-mode input::placeholder,
+.dark-mode textarea::placeholder {
+  color: var(--input-placeholder);
+}
+
+.dark-mode .btn-outline {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.dark-mode .btn-outline:hover {
+  color: #ffffff;
+  background-color: var(--primary-color);
+}
+
+.dark-mode .table {
+  color: var(--text-color);
+}
+
+.dark-mode .table th,
+.dark-mode .table td {
+  border-color: var(--border-color);
+}
+
+.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .table-hover tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.075);
+}
+
+.dark-mode .nav-link {
+  color: var(--text-light);
+}
+
+.dark-mode .nav-link:hover,
+.dark-mode .nav-link:focus {
+  color: var(--primary-color);
+}
+
+.dark-mode .nav-link.active {
+  color: var(--primary-color);
+}
+
+.dark-mode .empty-state {
+  background-color: var(--background-dark);
+  border-color: var(--border-color);
+  color: var(--text-light);
+}
+
+/* Garantir que ícones e elementos visuais sejam visíveis no modo escuro */
+.dark-mode .icon,
+.dark-mode .fa,
+.dark-mode .material-icons {
+  color: var(--text-light);
+}
+
+/* Ajustes para notificações e alertas no modo escuro */
+.dark-mode .toast,
+.dark-mode .alert {
+  background-color: var(--card-background);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.dark-mode .toast-header,
+.dark-mode .alert-heading {
+  color: var(--text-color);
+}
+
+/* Ajustes para calendário no modo escuro */
+.dark-mode .calendar-day,
+.dark-mode .react-calendar__tile {
+  background-color: var(--background-dark);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.dark-mode .calendar-day.active,
+.dark-mode .react-calendar__tile--active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dark-mode .calendar-day:hover,
+.dark-mode .react-calendar__tile:hover {
+  background-color: var(--background-light);
+}
+
+/* Ajustes para gráficos no modo escuro */
+.dark-mode .chart-container {
+  background-color: var(--card-background);
+  border-color: var(--border-color);
+}
+
+.dark-mode .chart-title,
+.dark-mode .chart-label {
+  color: var(--text-color);
+}
+
+.dark-mode .chart-grid-line {
+  stroke: var(--border-color);
+}
+
+.dark-mode .chart-axis-text {
+  fill: var(--text-light);
+}
+
+/* Ajustes para mensagens de estado vazio no modo escuro */
+.dark-mode .no-data-message,
+.dark-mode .empty-list-message {
+  color: var(--text-light);
+}
+
+/* Garantir que todos os textos sejam visíveis no modo escuro */
+.dark-mode p,
+.dark-mode span,
+.dark-mode label,
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6 {
+  color: var(--text-color);
+}
+
+/* Ajustes para links no modo escuro */
+.dark-mode a {
+  color: var(--primary-color);
+}
+
+.dark-mode a:hover {
+  color: var(--primary-light);
+}

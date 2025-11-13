@@ -1,0 +1,160 @@
+.medication-card-component {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  background-color: white;
+}
+
+.dark-mode .medication-card-component {
+  background-color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+}
+
+.medication-card-header {
+  padding: 20px 24px 12px;
+}
+
+.medication-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0aa174;
+  font-weight: 600;
+  font-size: 20px;
+  margin: 0;
+}
+
+.dark-mode .medication-card-title {
+  color: #34d399; /* tom de verde mais claro para dark mode */
+}
+
+.medication-title-icon {
+  height: 20px;
+  width: 20px;
+}
+
+.medication-card-content {
+  padding: 12px 24px 24px;
+}
+
+.no-medications-message {
+  padding: 16px;
+  text-align: center;
+  color: #64748b;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.dark-mode .no-medications-message {
+  color: #94a3b8;
+  background-color: #334155;
+}
+
+.medication-times-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.medication-time-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.medication-time {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0aa174;
+  background-color: #e6f7f2;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+.dark-mode .medication-time {
+  color: #34d399;
+  background-color: #14532d;
+}
+
+.medication-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.medication-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.dark-mode .medication-item {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.medication-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.medication-details {
+  flex: 1;
+}
+
+.medication-name {
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dark-mode .medication-name {
+  color: #cbd5e1;
+}
+
+.medication-dosage {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.dark-mode .medication-dosage {
+  color: #94a3b8;
+}
+
+.record-medication-btn {
+  background-color: #e6f7f2;
+  color: #0aa174;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dark-mode .record-medication-btn {
+  background-color: #14532d;
+  color: #34d399;
+}
+
+.record-medication-btn:hover {
+  background-color: #0aa174;
+  color: white;
+}
+
+.dark-mode .record-medication-btn:hover {
+  background-color: #34d399;
+  color: #1e293b;
+}

@@ -1,0 +1,1048 @@
+.emergency-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.emergency-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.emergency-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .emergency-section {
+  background-color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+.emergency-alert {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background-color: #fee2e2;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border-left: 5px solid #ef4444;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.dark-mode .emergency-alert {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-left: 5px solid #f87171;
+}
+
+.emergency-icon {
+  color: #ef4444;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
+}
+
+.dark-mode .emergency-icon {
+  color: #f87171;
+}
+
+.emergency-alert-text h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ef4444;
+  margin-bottom: 0.5rem;
+}
+
+.dark-mode .emergency-alert-text h2 {
+  color: #f87171;
+}
+
+.emergency-alert-text p {
+  font-size: 0.95rem;
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+.dark-mode .emergency-alert-text p {
+  color: #f1f5f9;
+}
+
+.emergency-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.emergency-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.emergency-button svg {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.emergency-button:hover svg {
+  transform: scale(1.1);
+}
+
+.emergency-button.share-location {
+  background-color: #0aa174;
+  color: white;
+}
+
+.emergency-button.share-location:hover {
+  background-color: #088f66;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(10, 161, 116, 0.25);
+}
+
+.emergency-button.show-info {
+  background-color: #ef4444; /* vermelho para alinhar com contexto de emergência */
+  color: #ffffff;
+}
+
+.dark-mode .emergency-button.show-info {
+  background-color: rgba(239, 68, 68, 0.35);
+  color: #ffffff;
+}
+
+.emergency-button.show-info:hover {
+  background-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.dark-mode .emergency-button.show-info:hover {
+  background-color: rgba(239, 68, 68, 0.55);
+}
+
+.emergency-info {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 0.5rem;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dark-mode .emergency-info {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+}
+
+.emergency-info h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.25rem;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.dark-mode .emergency-info h3 {
+  color: #f1f5f9;
+  border-bottom: 1px solid #334155;
+}
+
+.emergency-info h3:first-child {
+  margin-top: 0;
+}
+
+.emergency-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.emergency-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.emergency-info-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .emergency-info-label {
+  color: #94a3b8;
+}
+
+.emergency-info-value {
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.dark-mode .emergency-info-value {
+  color: #f1f5f9;
+}
+
+.emergency-conditions,
+.emergency-allergies,
+.emergency-medications {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin-bottom: 1.5rem;
+}
+
+.emergency-condition-tag,
+.emergency-allergy-tag {
+  background-color: #dbeafe;
+  color: #3b82f6;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.emergency-condition-tag:hover,
+.emergency-allergy-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .emergency-condition-tag {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.emergency-allergy-tag {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.dark-mode .emergency-allergy-tag {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.emergency-no-data {
+  font-size: 0.95rem;
+  color: #64748b;
+  font-style: italic;
+  padding: 0.75rem;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.dark-mode .emergency-no-data {
+  color: #94a3b8;
+  background-color: #1e293b;
+}
+
+.emergency-contacts-section {
+  margin-top: 1rem;
+  background-color: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.emergency-contacts-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .emergency-contacts-section {
+  background-color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+.emergency-contacts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.emergency-contacts-section h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dark-mode .emergency-contacts-section h2 {
+  color: #f1f5f9;
+}
+
+.add-contact-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #0aa174;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-contact-btn:hover {
+  background-color: #088f66;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(10, 161, 116, 0.25);
+}
+
+.emergency-contacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.emergency-contact-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.emergency-contact-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .emergency-contact-card {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+}
+
+.emergency-contact-info {
+  flex: 1;
+}
+
+.emergency-contact-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.375rem;
+}
+
+.dark-mode .emergency-contact-name {
+  color: #f1f5f9;
+}
+
+.emergency-contact-relation {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.625rem;
+}
+
+.dark-mode .emergency-contact-relation {
+  color: #94a3b8;
+}
+
+.emergency-contact-phone {
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dark-mode .emergency-contact-phone {
+  color: #f1f5f9;
+}
+
+.emergency-contact-actions {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.emergency-contact-call,
+.emergency-contact-sms,
+.emergency-contact-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.emergency-contact-call {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+.dark-mode .emergency-contact-call {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.emergency-contact-call:hover {
+  background-color: #10b981;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+
+.emergency-contact-sms {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.dark-mode .emergency-contact-sms {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.emergency-contact-sms:hover {
+  background-color: #3b82f6;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+.emergency-contact-whatsapp {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.dark-mode .emergency-contact-whatsapp {
+  background-color: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+}
+
+.emergency-contact-whatsapp:hover {
+  background-color: #16a34a;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(22, 163, 74, 0.3);
+}
+
+.emergency-contact-call:disabled,
+.emergency-contact-sms:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.emergency-notifications-section {
+  margin-top: 1.5rem;
+  background-color: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.emergency-notifications-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .emergency-notifications-section {
+  background-color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+.emergency-notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.emergency-notifications-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dark-mode .emergency-notifications-header h2 {
+  color: #f1f5f9;
+}
+
+.emergency-notifications-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0aa174;
+  background-color: rgba(10, 161, 116, 0.12);
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+}
+
+.dark-mode .emergency-notifications-count {
+  color: #34d399;
+  background-color: rgba(52, 211, 153, 0.15);
+}
+
+.emergency-notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.emergency-notification-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  background-color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  color: inherit;
+}
+
+.emergency-notification-card:focus-visible {
+  outline: 2px solid #0aa174;
+  outline-offset: 2px;
+}
+
+.emergency-notification-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+  border-color: #cbd5f5;
+}
+
+.emergency-notification-card.unread {
+  border-color: #0aa174;
+  background-color: rgba(10, 161, 116, 0.08);
+}
+
+.dark-mode .emergency-notification-card {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+}
+
+.dark-mode .emergency-notification-card:hover {
+  border-color: #475569;
+}
+
+.dark-mode .emergency-notification-card.unread {
+  border-color: #34d399;
+  background-color: rgba(52, 211, 153, 0.12);
+}
+
+.emergency-notification-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.dark-mode .emergency-notification-title {
+  color: #f8fafc;
+}
+
+.emergency-notification-message {
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.dark-mode .emergency-notification-message {
+  color: #cbd5f5;
+}
+
+.emergency-notification-time {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dark-mode .emergency-notification-time {
+  color: #94a3b8;
+}
+
+.emergency-notification-empty {
+  text-align: center;
+  padding: 1.25rem;
+  color: #94a3b8;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5f5;
+}
+
+.dark-mode .emergency-notification-empty {
+  color: #64748b;
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+/* Seção de números personalizados */
+.custom-numbers-section {
+  margin-top: 1.5rem;
+  background-color: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.custom-numbers-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .custom-numbers-section {
+  background-color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+.custom-numbers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.custom-numbers-section h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dark-mode .custom-numbers-section h2 {
+  color: #f1f5f9;
+}
+
+.add-number-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #0aa174;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-number-btn:hover {
+  background-color: #088f66;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(10, 161, 116, 0.25);
+}
+
+.custom-numbers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.custom-number-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.custom-number-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .custom-number-card {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+}
+
+.custom-number-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.dark-mode .custom-number-name {
+  color: #f1f5f9;
+}
+
+.custom-number-phone {
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dark-mode .custom-number-phone {
+  color: #f1f5f9;
+}
+
+.custom-number-description {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.dark-mode .custom-number-description {
+  color: #94a3b8;
+}
+
+.custom-number-actions {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 0.5rem;
+}
+
+.custom-number-call {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background-color: #d1fae5;
+  color: #10b981;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .custom-number-call {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.custom-number-call:hover {
+  background-color: #10b981;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.custom-number-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background-color: #dcfce7;
+  color: #16a34a;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .custom-number-whatsapp {
+  background-color: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+}
+
+.custom-number-whatsapp:hover {
+  background-color: #16a34a;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+}
+
+.custom-number-edit,
+.custom-number-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-number-edit {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.dark-mode .custom-number-edit {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.custom-number-edit:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.custom-number-delete {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.dark-mode .custom-number-delete {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.custom-number-delete:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+.no-custom-numbers {
+  text-align: center;
+  padding: 2rem;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  color: #64748b;
+}
+
+.dark-mode .no-custom-numbers {
+  background-color: #0f172a;
+  color: #94a3b8;
+}
+
+.add-number-form {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  animation: fadeIn 0.4s ease;
+}
+
+.dark-mode .add-number-form {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.dark-mode .form-group label {
+  color: #f1f5f9;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  background-color: white;
+  transition: all 0.2s ease;
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group textarea {
+  border-color: #334155;
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #0aa174;
+  box-shadow: 0 0 0 3px rgba(10, 161, 116, 0.15);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.cancel-btn {
+  padding: 0.75rem 1.25rem;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dark-mode .cancel-btn {
+  background-color: #1e293b;
+  color: #94a3b8;
+}
+
+.cancel-btn:hover {
+  background-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.dark-mode .cancel-btn:hover {
+  background-color: #334155;
+  color: #f1f5f9;
+}
+
+.save-btn {
+  padding: 0.75rem 1.25rem;
+  background-color: #0aa174;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn:hover {
+  background-color: #088f66;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(10, 161, 116, 0.25);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .emergency-actions {
+    flex-direction: column;
+  }
+
+  .emergency-button {
+    width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .emergency-contact-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .emergency-contact-actions {
+    margin-top: 1rem;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Modo escuro */
+.dark-mode .emergency-alert {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-left: 5px solid #f87171;
+}
+
+.dark-mode .emergency-icon {
+  color: #f87171;
+}
+
+.dark-mode .emergency-alert-text h2 {
+  color: #f87171;
+}
+
+.dark-mode .emergency-condition-tag {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.dark-mode .emergency-allergy-tag {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.dark-mode .emergency-contact-phone {
+  color: #f1f5f9;
+}

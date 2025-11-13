@@ -1,0 +1,189 @@
+.profile-card {
+	position: relative;
+	padding: 28px clamp(20px, 3vw, 32px);
+	border-radius: var(--idoso-card-radius, 22px);
+	background: var(--card-bg);
+	color: var(--text-primary);
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.profile-card::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background: radial-gradient(circle at top right, rgba(10, 161, 116, 0.2), transparent 58%);
+	opacity: 0.7;
+	z-index: -1;
+}
+
+.profile-header {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+
+.avatar {
+	background: linear-gradient(140deg, rgba(10, 161, 116, 0.22), rgba(10, 161, 116, 0.05));
+	color: var(--primary-color);
+	border: 2px solid rgba(10, 161, 116, 0.32);
+	width: 64px;
+	height: 64px;
+	font-weight: 700;
+	font-size: 22px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 12px 26px rgba(10, 161, 116, 0.22);
+}
+
+.profile-info strong {
+	font-size: 1.15rem;
+	color: var(--text-primary);
+}
+
+.profile-info small {
+	color: var(--text-secondary);
+	font-weight: 500;
+	letter-spacing: 0.02em;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 18px;
+}
+
+.grid > div {
+	display: grid;
+	gap: 12px;
+}
+
+.label {
+	color: var(--text-secondary);
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.value {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: var(--text-primary);
+}
+
+.allergy-tag {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 14px;
+	border-radius: 999px;
+	background: rgba(255, 99, 71, 0.16);
+	color: #b42318;
+	font-weight: 600;
+	font-size: 0.85rem;
+}
+
+.caregiver-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.caregiver-title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--text-primary);
+}
+
+.caregiver-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	gap: 12px;
+}
+
+.caregiver-card {
+	border: 1px solid var(--border-subtle, rgba(17, 24, 39, 0.08));
+	border-radius: 14px;
+	padding: 14px 16px;
+	background: rgba(10, 161, 116, 0.08);
+	backdrop-filter: blur(6px);
+}
+
+.caregiver-name {
+	font-weight: 600;
+	font-size: 1rem;
+	color: var(--text-primary);
+	margin-bottom: 8px;
+}
+
+.caregiver-meta {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+}
+
+.caregiver-meta dt {
+	margin: 0;
+	font-size: 0.75rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-secondary);
+}
+
+.caregiver-meta dd {
+	margin: 2px 0 0;
+	font-weight: 600;
+	color: var(--text-primary);
+}
+
+.caregiver-empty {
+	margin: 0;
+	font-size: 0.95rem;
+	color: var(--text-secondary);
+	background: rgba(55, 65, 81, 0.08);
+	border-radius: 12px;
+	padding: 12px 16px;
+}
+
+.load-button {
+	align-self: flex-start;
+	padding: 10px 18px;
+	background: var(--primary-color);
+	color: #fff;
+	border: none;
+	border-radius: 12px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 0.95rem;
+	transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.load-button:hover,
+.load-button:focus-visible {
+	background: var(--primary-hover);
+	transform: translateY(-2px);
+	box-shadow: 0 14px 28px rgba(10, 161, 116, 0.24);
+	outline: none;
+}
+
+@media (max-width: 640px) {
+	.profile-card {
+		padding: 22px;
+	}
+
+	.avatar {
+		width: 56px;
+		height: 56px;
+	}
+}
+
