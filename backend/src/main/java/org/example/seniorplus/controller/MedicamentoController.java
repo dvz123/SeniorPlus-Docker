@@ -1,55 +1,61 @@
 package org.example.seniorplus.controller;
 
+import java.util.List;
+
 import org.example.seniorplus.domain.Medicamento;
+import org.example.seniorplus.dto.MedicamentoRequest;
 import org.example.seniorplus.service.MedicamentoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import java.net.URI;
-import java.util.List;
 
 @RestController
-@RequestMapping(value = "/api/v1/medicamentos")
+@RequestMapping("/api/v1")
 public class MedicamentoController {
 
     @Autowired
     private MedicamentoService service;
 
-    // GET /api/v1/medicamentos
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<Medicamento>> listarTodos() {
-        List<Medicamento> list = service.listarTodos();
-        return ResponseEntity.ok().body(list);
+    @GetMapping("/idosos/{cpf}/medicamentos")
+    public ResponseEntity<List<Medicamento>> listar(@PathVariable String cpf) {
+        return ResponseEntity.ok(service.listarPorCpf(cpf));
     }
 
-    // GET /api/v1/medicamentos/{cpf}
-    @RequestMapping(value = "/{cpf}", method = RequestMethod.GET)
-    public ResponseEntity<Medicamento> buscarPorCpf(@PathVariable String cpf) {
-        Medicamento obj = service.buscarPorCpf(cpf);
-        return ResponseEntity.ok().body(obj);
+    @PostMapping("/idosos/{cpf}/medicamentos")
+    public ResponseEntity<Medicamento> criar(@PathVariable String cpf, @RequestBody MedicamentoRequest request) {
+        Medicamento salvo = service.salvar(cpf, toMedicamento(request));
+        return ResponseEntity.status(201).body(salvo);
     }
 
-    // POST /api/v1/medicamentos
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Void> criar(@RequestBody Medicamento medicamento) {
-        Medicamento obj = service.salvar(medicamento);
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{cpf}").buildAndExpand(obj.getCpf()).toUri();
-        return ResponseEntity.created(uri).build();
+    @PutMapping("/medicamentos/{id}")
+    public ResponseEntity<Medicamento> atualizar(@PathVariable Long id, @RequestBody MedicamentoRequest request) {
+        Medicamento atualizado = service.atualizar(id, toMedicamento(request));
+        return ResponseEntity.ok(atualizado);
     }
 
-    // PUT /api/v1/medicamentos/{cpf}
-    @RequestMapping(value = "/{cpf}", method = RequestMethod.PUT)
-    public ResponseEntity<Medicamento> atualizar(@PathVariable String cpf, @RequestBody Medicamento medicamento) {
-        Medicamento objAtualizado = service.atualizar(cpf, medicamento);
-        return ResponseEntity.ok().body(objAtualizado);
-    }
-
-    // DELETE /api/v1/medicamentos/{cpf}
-    @RequestMapping(value = "/{cpf}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> deletar(@PathVariable String cpf) {
-        service.deletar(cpf);
+    @DeleteMapping("/medicamentos/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        service.deletar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Medicamento toMedicamento(MedicamentoRequest request) {
+        Medicamento medicamento = new Medicamento();
+        medicamento.setNomeMedicamento(request.getNomeMedicamento());
+        medicamento.setDosagem(request.getDosagem());
+        medicamento.setFormaAdministracao(request.getFormaAdministracao());
+        medicamento.setInstrucoes(request.getInstrucoes());
+        medicamento.setDataInicio(request.getDataInicio());
+        medicamento.setDataFim(request.getDataFim());
+        medicamento.setHorarios(request.getHorarios());
+        medicamento.setRepetirDiariamente(request.isRepetirDiariamente());
+        medicamento.setIntervaloHoras(request.getIntervaloHoras());
+        medicamento.setIntervaloMinutos(request.getIntervaloMinutos());
+        medicamento.setNomeUsuario(request.getNomeUsuario());
+        medicamento.setContatoEmergencia(request.getContatoEmergencia());
+        medicamento.setNotificarPorEmail(request.isNotificarPorEmail());
+        medicamento.setNotificarPorApp(request.isNotificarPorApp());
+        medicamento.setNotificarPorSms(request.isNotificarPorSms());
+        return medicamento;
     }
 }

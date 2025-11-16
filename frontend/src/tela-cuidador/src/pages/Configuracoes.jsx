@@ -4,16 +4,37 @@ import { useAccessibility } from "../../../contexts/AccessibilityContext"
 import { useToast } from "../../../contexts/ToastContext"
 import "../styles/Configuracoes.css"
 import BackButton from "../../../components/BackButton"
+import { useCaregiverProfile } from "../contexts/CaregiverProfileContext"
+import { useAuth } from "../../../tela-auth/src/contexts/AuthContext"
 
 function Configuracoes() {
   const { darkMode, toggleDarkMode } = useTheme()
   const { prefs, setFontScale, increaseFontScale, decreaseFontScale, toggleHighContrast, toggleReducedMotion, toggleReadingMode } = useAccessibility()
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
+  const { caregiverProfile, updateCaregiverProfile, resetCaregiverProfile } = useCaregiverProfile()
+  const { currentUser } = useAuth()
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [reminderTime, setReminderTime] = useState("30")
   const [language, setLanguage] = useState("pt-BR")
   const [fontSize, setFontSize] = useState("medium")
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  const [caregiverForm, setCaregiverForm] = useState(() => ({
+    displayName:
+      caregiverProfile?.displayName ||
+      currentUser?.name ||
+      currentUser?.nome ||
+      currentUser?.fullName ||
+      currentUser?.username ||
+      "",
+    headline: caregiverProfile?.headline || "",
+    about: caregiverProfile?.about || "",
+    photoUrl: caregiverProfile?.photoUrl || "",
+    phone: caregiverProfile?.phone || currentUser?.telefone || currentUser?.phone || "",
+    email: caregiverProfile?.email || currentUser?.email || "",
+    connectionMessage: caregiverProfile?.connectionMessage || "",
+  }))
 
   // Sincronizar select inicial com prefs.fontScale
   useEffect(() => {
@@ -24,11 +45,88 @@ function Configuracoes() {
     else if (scale < 1.4) setFontSize('large')
     else setFontSize('x-large')
   }, [prefs.fontScale])
+
+  useEffect(() => {
+    setCaregiverForm({
+      displayName:
+        caregiverProfile?.displayName ||
+        currentUser?.name ||
+        currentUser?.nome ||
+        currentUser?.fullName ||
+        currentUser?.username ||
+        "",
+      headline: caregiverProfile?.headline || "",
+      about: caregiverProfile?.about || "",
+      photoUrl: caregiverProfile?.photoUrl || "",
+      phone: caregiverProfile?.phone || currentUser?.telefone || currentUser?.phone || "",
+      email: caregiverProfile?.email || currentUser?.email || "",
+      connectionMessage: caregiverProfile?.connectionMessage || "",
+    })
+  }, [caregiverProfile, currentUser?.id])
+
   const [dataBackup, setDataBackup] = useState({
     lastBackup: "Nunca",
     autoBackup: false,
     backupFrequency: "weekly",
   })
+
+  const handleCaregiverInputChange = (event) => {
+    const { name, value } = event.target
+    setCaregiverForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleCaregiverPhotoChange = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith("image/")) {
+      showError?.("Selecione um arquivo de imagem válido")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result?.toString() || ""
+      setCaregiverForm((prev) => ({ ...prev, photoUrl: result }))
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveCaregiverPhoto = () => {
+    setCaregiverForm((prev) => ({ ...prev, photoUrl: "" }))
+  }
+
+  const handleCaregiverSubmit = async (event) => {
+    event.preventDefault()
+    setSavingProfile(true)
+    try {
+      await updateCaregiverProfile({ ...caregiverForm })
+      showSuccess?.("Perfil do cuidador atualizado!")
+    } catch (error) {
+      console.error("Erro ao salvar perfil do cuidador", error)
+      showError?.("Não foi possível salvar o perfil agora.")
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  const handleResetCaregiver = () => {
+    resetCaregiverProfile()
+    setCaregiverForm({
+      displayName:
+        currentUser?.name ||
+        currentUser?.nome ||
+        currentUser?.fullName ||
+        currentUser?.username ||
+        "",
+      headline: "",
+      about: "",
+      photoUrl: "",
+      phone: currentUser?.telefone || currentUser?.phone || "",
+      email: currentUser?.email || "",
+      connectionMessage: "",
+    })
+    showSuccess?.("Perfil restaurado para o padrão")
+  }
 
   const handleNotificationsToggle = () => {
     setNotificationsEnabled(!notificationsEnabled)
@@ -110,6 +208,176 @@ function Configuracoes() {
         </div>
 
         <div className="settings-container">
+          <div className="settings-section">
+            <h2>Perfil do cuidador</h2>
+            <form className="settings-card caregiver-profile-card" onSubmit={handleCaregiverSubmit}>
+              <div className="caregiver-profile-layout">
+                <div className="caregiver-photo-column">
+                  <span className="settings-option-label">Foto</span>
+                  <p className="settings-option-description">
+                    Esta imagem aparece no cabeçalho, na sidebar e na lista de cuidadores para os idosos.
+                  </p>
+                  <label className="photo-input" aria-label="Enviar foto do cuidador">
+                    {caregiverForm.photoUrl ? (
+                      <img
+                        src={caregiverForm.photoUrl}
+                        alt="Pré-visualização da foto do cuidador"
+                      />
+                    ) : (
+                      <span>Adicionar foto</span>
+                    )}
+                    <input type="file" accept="image/*" onChange={handleCaregiverPhotoChange} />
+                  </label>
+                  {caregiverForm.photoUrl ? (
+                    <button
+                      type="button"
+                      className="settings-button secondary"
+                      onClick={handleRemoveCaregiverPhoto}
+                    >
+                      Remover foto
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="caregiver-fields-column">
+                  <div className="settings-option compact">
+                    <div className="settings-option-info">
+                      <label className="settings-option-label" htmlFor="displayName">Nome exibido</label>
+                      <div className="settings-option-description">
+                        Utilize o nome que será visto pelos idosos em convites e cards.
+                      </div>
+                    </div>
+                    <div className="settings-option-control">
+                      <input
+                        id="displayName"
+                        name="displayName"
+                        type="text"
+                        className="settings-input"
+                        value={caregiverForm.displayName}
+                        onChange={handleCaregiverInputChange}
+                        placeholder="Nome completo ou apelido"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-option compact">
+                    <div className="settings-option-info">
+                      <label className="settings-option-label" htmlFor="headline">Área de atuação</label>
+                      <div className="settings-option-description">
+                        Informe especialidade ou foco do atendimento.
+                      </div>
+                    </div>
+                    <div className="settings-option-control">
+                      <input
+                        id="headline"
+                        name="headline"
+                        type="text"
+                        className="settings-input"
+                        value={caregiverForm.headline}
+                        onChange={handleCaregiverInputChange}
+                        placeholder="Ex: Cuidador especializado em mobilidade"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-option compact">
+                    <div className="settings-option-info">
+                      <label className="settings-option-label" htmlFor="connectionMessage">Mensagem de conexão</label>
+                      <div className="settings-option-description">
+                        Texto exibido ao idoso quando ele receber sua solicitação de vínculo.
+                      </div>
+                    </div>
+                    <div className="settings-option-control">
+                      <textarea
+                        id="connectionMessage"
+                        name="connectionMessage"
+                        className="settings-textarea"
+                        rows={3}
+                        maxLength={240}
+                        value={caregiverForm.connectionMessage}
+                        onChange={handleCaregiverInputChange}
+                        placeholder="Olá! Sou responsável pelos cuidados diários, estarei sempre à disposição."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-option compact">
+                    <div className="settings-option-info">
+                      <label className="settings-option-label" htmlFor="phone">Telefone de contato</label>
+                      <div className="settings-option-description">
+                        Inclua um telefone para emergências ou comunicação direta.
+                      </div>
+                    </div>
+                    <div className="settings-option-control">
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        className="settings-input"
+                        value={caregiverForm.phone}
+                        onChange={handleCaregiverInputChange}
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-option compact">
+                    <div className="settings-option-info">
+                      <label className="settings-option-label" htmlFor="email">E-mail</label>
+                      <div className="settings-option-description">
+                        Usado para exibir informações de contato e receber notificações.
+                      </div>
+                    </div>
+                    <div className="settings-option-control">
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        className="settings-input"
+                        value={caregiverForm.email}
+                        onChange={handleCaregiverInputChange}
+                        placeholder="cuidador@exemplo.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-option compact">
+                    <div className="settings-option-info">
+                      <label className="settings-option-label" htmlFor="about">Descrição</label>
+                      <div className="settings-option-description">
+                        Conte um pouco sobre você. Essa informação aparece no card do cuidador.
+                      </div>
+                    </div>
+                    <div className="settings-option-control">
+                      <textarea
+                        id="about"
+                        name="about"
+                        className="settings-textarea"
+                        rows={3}
+                        maxLength={300}
+                        value={caregiverForm.about}
+                        onChange={handleCaregiverInputChange}
+                        placeholder="Experiência, diferenciais ou cuidados oferecidos."
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="caregiver-profile-actions">
+                <button
+                  type="button"
+                  className="settings-button secondary"
+                  onClick={handleResetCaregiver}
+                >
+                  Restaurar padrão
+                </button>
+                <button type="submit" className="settings-button" disabled={savingProfile}>
+                  {savingProfile ? "Salvando..." : "Salvar perfil"}
+                </button>
+              </div>
+            </form>
+          </div>
+
           <div className="settings-section">
             <h2>Aparência</h2>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Siren } from 'lucide-react'
-import { FaBolt, FaPhoneAlt, FaTrashAlt, FaWhatsapp } from 'react-icons/fa'
+import { Siren, PhoneCall, MessageCircle, Plus, Users, ArrowUpRight } from 'lucide-react'
+import { FaPhoneAlt, FaTrashAlt, FaWhatsapp } from 'react-icons/fa'
 import { api } from '../../../tela-auth/src/services/api'
 import { useAuth } from '../../../tela-auth/src/contexts/AuthContext'
 import { useToast } from '../../../contexts/ToastContext'
@@ -22,6 +22,7 @@ export default function EmergencyPopup({ isOpen, onClose }) {
       return []
     }
   })
+  const [draftContact, setDraftContact] = useState({ name: '', phone: '' })
 
   const panelRef = useRef(null)
   const contactSectionRef = useRef(null)
@@ -36,6 +37,21 @@ export default function EmergencyPopup({ isOpen, onClose }) {
       }),
     [customNumbers, currentUser?.emergencyContact, currentUser?.emergencyContactName],
   )
+
+  const primaryContact = useMemo(
+    () => mergedContacts.find((contact) => contact.id === 'primary_contact') || null,
+    [mergedContacts],
+  )
+
+  const secondaryContact = useMemo(() => {
+    if (!mergedContacts.length) return null
+    if (primaryContact) {
+      return mergedContacts.find((contact) => contact.id !== 'primary_contact') || null
+    }
+    return mergedContacts[0]
+  }, [mergedContacts, primaryContact])
+
+  const whatsappTarget = primaryContact || secondaryContact
 
   useEffect(() => {
     try {
@@ -129,16 +145,49 @@ export default function EmergencyPopup({ isOpen, onClose }) {
     }
   }
 
-  const handleAddCustom = () => {
-    const name = prompt('Nome do contato:')
-    if (!name) return
-    const phone = prompt('Telefone (ex: (11) 99999-9999):')
-    if (!phone) return
+  const handlePrimaryCall = () => {
+    const target = primaryContact || secondaryContact
+    if (!target) {
+      setHighlightContacts(true)
+      if (showError) showError('Cadastre ao menos um contato de emergência.')
+      return
+    }
+    handleCall(target)
+  }
+
+  const handlePrimaryWhatsApp = () => {
+    const target = whatsappTarget
+    if (!target) {
+      setHighlightContacts(true)
+      if (showError) showError('Cadastre ao menos um contato para enviar WhatsApp.')
+      return
+    }
+    handleWhatsApp(target)
+  }
+
+  const handleDraftChange = (field) => (event) => {
+    const value = event.target.value
+    setDraftContact((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleSubmitCustom = (event) => {
+    event.preventDefault()
+    const name = draftContact.name?.trim()
+    const phone = draftContact.phone?.trim()
+
+    if (!name || !phone) {
+      if (showError) showError('Informe nome e telefone para adicionar o contato.')
+      return
+    }
+
     const id = `custom_${Date.now()}`
     const newContact = { id, name, phone, relation: 'Personalizado' }
     setCustomNumbers((prev) => [...prev, newContact])
-    if (showSuccess) showSuccess('Número adicionado')
+    setDraftContact({ name: '', phone: '' })
+    if (showSuccess) showSuccess('Contato adicionado à lista de emergência.')
     notifyEmergencyAction({ action: 'contato-adicionado', contact: newContact, status: 'success' })
+    setHighlightContacts(true)
+    setTimeout(() => setHighlightContacts(false), 1500)
   }
 
   const handleRemoveCustom = (id) => {
@@ -175,93 +224,184 @@ export default function EmergencyPopup({ isOpen, onClose }) {
         className="idoso-emergency-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Painel de emergência"
+        aria-label="Central de emergência"
       >
         <button type="button" className="emergency-close" onClick={onClose} aria-label="Fechar painel de emergência">
-          ×
+          <ArrowUpRight aria-hidden="true" />
         </button>
 
-        <div className="emergency-hero">
+        <section className="emergency-hero">
           <div className="emergency-hero__icon" aria-hidden="true">
-            <Siren size={36} strokeWidth={1.8} />
+            <Siren size={48} strokeWidth={1.5} />
           </div>
-          <div className="emergency-hero__text">
-            <h2>Precisa de ajuda imediata?</h2>
-            <p>Use os atalhos abaixo ou escolha um contato da sua lista de confiança.</p>
-            <div className="emergency-primary-actions" role="group" aria-label="Ações rápidas de emergência">
-              <button type="button" className="primary-action call" onClick={handleAmbulanceCall}>
-                <FaPhoneAlt aria-hidden="true" />
-                <span>Ligar 192 (Ambulância)</span>
+          <div className="emergency-hero__content">
+            <span className="emergency-hero__eyebrow">Central de emergência</span>
+            <h2>Está tudo bem por aí?</h2>
+            <p>Acione o SAMU, avise alguém de confiança ou cadastre novos contatos em poucos toques.</p>
+            <div className="emergency-hero__cta">
+              <button type="button" className="hero-button hero-button--primary" onClick={handleAmbulanceCall}>
+                <PhoneCall size={18} aria-hidden="true" />
+                <span>Ligar 192</span>
               </button>
-              <button type="button" className="primary-action quick" onClick={handleShowContacts}>
-                <FaBolt aria-hidden="true" />
-                <span>Ver contatos rápidos</span>
+              <button type="button" className="hero-button" onClick={handleShowContacts}>
+                <Users size={18} aria-hidden="true" />
+                <span>Ver contatos</span>
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
-        <section
-          ref={contactSectionRef}
-          className="emergency-contacts"
-          id="emergency-contacts"
-          aria-label="Contatos de emergência"
-        >
-          <header className="emergency-contacts__header">
-            <h3>Contatos salvos</h3>
-            <button type="button" className="emergency-add" onClick={handleAddCustom}>
-              Adicionar contato
-            </button>
-          </header>
+        <div className="emergency-layout">
+          <section className="emergency-column emergency-column--actions" aria-label="Ações rápidas">
+            <header className="column-header">
+              <h3>Ações rápidas</h3>
+              <p>Escolha a melhor forma de pedir ajuda agora.</p>
+            </header>
+            <div className="action-stack">
+              <button
+                type="button"
+                className="action-card action-card--call"
+                onClick={handlePrimaryCall}
+                disabled={!primaryContact && !secondaryContact}
+              >
+                <span className="action-card__icon" aria-hidden="true">
+                  <Users size={22} />
+                </span>
+                <span className="action-card__content">
+                  <strong>Ligar para contato</strong>
+                  <small>{primaryContact?.name || secondaryContact?.name || 'Cadastre um contato'}</small>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="action-card action-card--whatsapp"
+                onClick={handlePrimaryWhatsApp}
+                disabled={!whatsappTarget}
+              >
+                <span className="action-card__icon" aria-hidden="true">
+                  <MessageCircle size={22} />
+                </span>
+                <span className="action-card__content">
+                  <strong>Enviar WhatsApp</strong>
+                  <small>
+                    {whatsappTarget ? `Mensagem para ${whatsappTarget.name}` : 'Cadastre um contato'}
+                  </small>
+                </span>
+              </button>
+              <button type="button" className="action-card action-card--manage" onClick={handleShowContacts}>
+                <span className="action-card__icon" aria-hidden="true">
+                  <Plus size={22} />
+                </span>
+                <span className="action-card__content">
+                  <strong>Gerenciar contatos</strong>
+                  <small>Adicionar ou remover números confiáveis</small>
+                </span>
+              </button>
+            </div>
 
-          <div className={`emergency-contact-list${highlightContacts ? ' highlight' : ''}`}>
-            {mergedContacts.length === 0 ? (
-              <p className="emergency-empty">Nenhum contato cadastrado ainda.</p>
-            ) : (
-              mergedContacts.map((contact) => (
-                <article className="emergency-contact-card" key={contact.id || contact.phone}>
-                  <div className="contact-main">
-                    <strong>{contact.name}</strong>
-                    <span>{contact.phone}</span>
-                  </div>
-                  <div className="contact-actions" role="group" aria-label={`Ações para ${contact.name}`}>
-                    <button
-                      type="button"
-                      className="contact-btn call"
-                      onClick={() => handleCall(contact)}
-                      disabled={calling}
-                      aria-label={`Ligar para ${contact.name}`}
-                    >
-                      <FaPhoneAlt aria-hidden="true" />
-                      <span>Ligar</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="contact-btn whatsapp"
-                      onClick={() => handleWhatsApp(contact)}
-                      disabled={sending}
-                      aria-label={`Enviar WhatsApp para ${contact.name}`}
-                    >
-                      <FaWhatsapp aria-hidden="true" />
-                      <span>WhatsApp</span>
-                    </button>
-                    {contact.id && String(contact.id).startsWith('custom_') && (
+            <div className="action-support">
+              <h4>Sem contatos cadastrados?</h4>
+              <p>Você pode incluir familiares, vizinhos ou profissionais de confiança na lista ao lado.</p>
+              <button type="button" onClick={handleShowContacts}>
+                Adicionar novo contato
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </button>
+            </div>
+          </section>
+
+          <section
+            ref={contactSectionRef}
+            className={`emergency-column emergency-column--contacts${highlightContacts ? ' is-highlighted' : ''}`}
+            id="emergency-contacts"
+            aria-label="Contatos de emergência"
+          >
+            <header className="column-header">
+              <h3>Contatos de confiança</h3>
+              <p>Toque em um contato para ligar ou enviar uma mensagem.</p>
+            </header>
+
+            <div className="contact-list">
+              {mergedContacts.length === 0 ? (
+                <p className="contact-empty">Nenhum contato cadastrado ainda.</p>
+              ) : (
+                mergedContacts.map((contact) => (
+                  <article className="contact-card" key={contact.id || contact.phone}>
+                    <div className="contact-card__main">
+                      <strong>{contact.name}</strong>
+                      <span>{contact.phone}</span>
+                      {contact.relation ? <small>{contact.relation}</small> : null}
+                    </div>
+                    <div className="contact-card__actions" role="group" aria-label={`Ações para ${contact.name}`}>
                       <button
                         type="button"
-                        className="contact-btn remove"
-                        onClick={() => handleRemoveCustom(contact.id)}
-                        aria-label={`Remover contato ${contact.name}`}
+                        className="contact-button contact-button--call"
+                        onClick={() => handleCall(contact)}
+                        disabled={calling}
+                        aria-label={`Ligar para ${contact.name}`}
                       >
-                        <FaTrashAlt aria-hidden="true" />
-                        <span>Remover</span>
+                        <FaPhoneAlt aria-hidden="true" />
+                        <span>Ligar</span>
                       </button>
-                    )}
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
-        </section>
+                      <button
+                        type="button"
+                        className="contact-button contact-button--whatsapp"
+                        onClick={() => handleWhatsApp(contact)}
+                        disabled={sending}
+                        aria-label={`Enviar WhatsApp para ${contact.name}`}
+                      >
+                        <FaWhatsapp aria-hidden="true" />
+                        <span>WhatsApp</span>
+                      </button>
+                      {contact.id && String(contact.id).startsWith('custom_') && (
+                        <button
+                          type="button"
+                          className="contact-button contact-button--remove"
+                          onClick={() => handleRemoveCustom(contact.id)}
+                          aria-label={`Remover contato ${contact.name}`}
+                        >
+                          <FaTrashAlt aria-hidden="true" />
+                          <span>Remover</span>
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+
+            <form className="contact-form" onSubmit={handleSubmitCustom}>
+              <h4>Adicionar novo contato</h4>
+              <div className="contact-form__grid">
+                <label className="contact-form__field">
+                  <span>Nome</span>
+                  <input
+                    type="text"
+                    name="name"
+                    value={draftContact.name}
+                    onChange={handleDraftChange('name')}
+                    placeholder="Ex: Maria Silva"
+                    autoComplete="name"
+                  />
+                </label>
+                <label className="contact-form__field">
+                  <span>Telefone</span>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={draftContact.phone}
+                    onChange={handleDraftChange('phone')}
+                    placeholder="(11) 99999-9999"
+                    autoComplete="tel"
+                    inputMode="tel"
+                  />
+                </label>
+              </div>
+              <button type="submit" className="contact-form__submit">
+                <Plus size={18} aria-hidden="true" /> Adicionar contato
+              </button>
+            </form>
+          </section>
+        </div>
       </div>
     </div>
   )

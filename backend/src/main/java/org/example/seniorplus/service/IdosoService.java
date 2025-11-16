@@ -79,10 +79,17 @@ public class IdosoService {
             existente.setEmail(novoIdoso.getEmail());
             existente.setDataNascimento(novoIdoso.getDataNascimento());
             existente.setTelefone(novoIdoso.getTelefone());
+            existente.setGenero(novoIdoso.getGenero());
+            existente.setEstadoCivil(novoIdoso.getEstadoCivil());
+            existente.setIdade(novoIdoso.getIdade());
             existente.setPeso(novoIdoso.getPeso());
             existente.setAltura(novoIdoso.getAltura());
             existente.setTipoSanguineo(novoIdoso.getTipoSanguineo());
             existente.setObservacao(novoIdoso.getObservacao());
+            existente.setAlergias(novoIdoso.getAlergias());
+            existente.setFotoUrl(novoIdoso.getFotoUrl());
+            existente.setNomeContatoEmergencia(novoIdoso.getNomeContatoEmergencia());
+            existente.setContatoEmergencia(novoIdoso.getContatoEmergencia());
             existente.getEnderecos().clear();
             if (novoIdoso.getEnderecos() != null) {
                 existente.getEnderecos().addAll(novoIdoso.getEnderecos());

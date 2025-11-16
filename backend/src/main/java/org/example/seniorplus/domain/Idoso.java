@@ -36,6 +36,15 @@ public class Idoso extends BaseEntity {
     @Column(length = 20)
     private String telefone;
     
+    @Column(length = 20)
+    private String genero;
+
+    @Column(name = "estado_civil", length = 40)
+    private String estadoCivil;
+
+    @Column
+    private Integer idade;
+
     @Column(precision = 5, scale = 2)
     private BigDecimal peso;
     
@@ -47,7 +56,19 @@ public class Idoso extends BaseEntity {
     
     @Column(columnDefinition = "TEXT")
     private String observacao;
-    
+
+    @Column(columnDefinition = "TEXT")
+    private String alergias;
+
+    @Column(name = "foto_url", length = 1024)
+    private String fotoUrl;
+
+    @Column(name = "nome_contato_emergencia", length = 150)
+    private String nomeContatoEmergencia;
+
+    @Column(name = "contato_emergencia", length = 32)
+    private String contatoEmergencia;
+
     @Column(length = 64)
     private String imc;
 
@@ -63,17 +84,24 @@ public class Idoso extends BaseEntity {
     public Idoso() {
     }
 
-    public Idoso(String cpf, String rg, String nome, String email, Date dataNascimento, String telefone, BigDecimal peso, BigDecimal altura, String tipoSanguineo, String observacao, String imc) {
+    public Idoso(String cpf, String rg, String nome, String email, Date dataNascimento, String telefone, BigDecimal peso, BigDecimal altura, String tipoSanguineo, String observacao, String alergias, String fotoUrl, String nomeContatoEmergencia, String contatoEmergencia, String imc) {
         this.cpf = cpf;
         this.rg = rg;
         this.nome = nome;
         this.email = email;
         this.dataNascimento = dataNascimento;
         this.telefone = telefone;
+        this.genero = null;
+        this.estadoCivil = null;
+        this.idade = null;
     this.peso = peso;
     this.altura = altura;
         this.tipoSanguineo = tipoSanguineo;
         this.observacao = observacao;
+        this.alergias = alergias;
+        this.fotoUrl = fotoUrl;
+        this.nomeContatoEmergencia = nomeContatoEmergencia;
+        this.contatoEmergencia = contatoEmergencia;
         this.imc = imc;
     }
 
@@ -125,6 +153,30 @@ public class Idoso extends BaseEntity {
         this.telefone = telefone;
     }
 
+    public String getGenero() {
+        return genero;
+    }
+
+    public void setGenero(String genero) {
+        this.genero = genero;
+    }
+
+    public String getEstadoCivil() {
+        return estadoCivil;
+    }
+
+    public void setEstadoCivil(String estadoCivil) {
+        this.estadoCivil = estadoCivil;
+    }
+
+    public Integer getIdade() {
+        return idade;
+    }
+
+    public void setIdade(Integer idade) {
+        this.idade = idade;
+    }
+
     public BigDecimal getPeso() {
         return peso;
     }
@@ -155,6 +207,38 @@ public class Idoso extends BaseEntity {
 
     public void setObservacao(String observacao) {
         this.observacao = observacao;
+    }
+
+    public String getAlergias() {
+        return alergias;
+    }
+
+    public void setAlergias(String alergias) {
+        this.alergias = alergias;
+    }
+
+    public String getFotoUrl() {
+        return fotoUrl;
+    }
+
+    public void setFotoUrl(String fotoUrl) {
+        this.fotoUrl = fotoUrl;
+    }
+
+    public String getNomeContatoEmergencia() {
+        return nomeContatoEmergencia;
+    }
+
+    public void setNomeContatoEmergencia(String nomeContatoEmergencia) {
+        this.nomeContatoEmergencia = nomeContatoEmergencia;
+    }
+
+    public String getContatoEmergencia() {
+        return contatoEmergencia;
+    }
+
+    public void setContatoEmergencia(String contatoEmergencia) {
+        this.contatoEmergencia = contatoEmergencia;
     }
 
     public List<Endereco> getEnderecos() {

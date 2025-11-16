@@ -28,6 +28,13 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.caregiver-profile-card {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
 .settings-option {
   display: flex;
   justify-content: space-between;
@@ -38,6 +45,13 @@
 
 .settings-option:last-child {
   border-bottom: none;
+}
+
+.settings-option.compact {
+  padding: 0;
+  border-bottom: none;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .settings-option-info {
@@ -60,6 +74,32 @@
 .settings-option-control {
   margin-left: 1rem;
   min-width: 120px;
+}
+
+.settings-input,
+.settings-textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.settings-input:focus,
+.settings-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.settings-textarea {
+  min-height: 110px;
+  line-height: 1.45;
 }
 
 .toggle-switch-container {
@@ -154,6 +194,67 @@
   padding: 1rem 0;
 }
 
+.caregiver-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(200px, 240px) 1fr;
+  gap: 1.25rem;
+}
+
+.caregiver-photo-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.photo-input {
+  position: relative;
+  border: 2px dashed rgba(148, 163, 184, 0.55);
+  border-radius: 18px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(241, 245, 249, 0.5);
+  color: var(--text-secondary);
+  font-weight: 600;
+  min-height: 164px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.photo-input:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.photo-input input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.photo-input img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+.caregiver-fields-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.caregiver-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .settings-link {
   color: var(--primary-color);
   text-decoration: none;
@@ -179,6 +280,14 @@
   }
 
   .settings-actions {
+    justify-content: center;
+  }
+
+  .caregiver-profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .caregiver-profile-actions {
     justify-content: center;
   }
 }

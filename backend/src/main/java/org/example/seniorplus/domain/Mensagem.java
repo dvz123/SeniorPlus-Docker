@@ -19,8 +19,11 @@ public class Mensagem extends BaseEntity {
 
     private String destinatario;
 
-    @ManyToOne
-    @JoinColumn(name = "idoso_id")
+    @Column(nullable = false)
+    private boolean lida = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idoso_id", referencedColumnName = "cpf")
     private Idoso idoso;
 
     // getters/setters
@@ -62,6 +65,14 @@ public class Mensagem extends BaseEntity {
 
     public void setDestinatario(String destinatario) {
         this.destinatario = destinatario;
+    }
+
+    public boolean isLida() {
+        return lida;
+    }
+
+    public void setLida(boolean lida) {
+        this.lida = lida;
     }
 
     public Idoso getIdoso() {

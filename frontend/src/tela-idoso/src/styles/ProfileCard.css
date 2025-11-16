@@ -40,6 +40,23 @@
 	align-items: center;
 	justify-content: center;
 	box-shadow: 0 12px 26px rgba(10, 161, 116, 0.22);
+	overflow: hidden;
+	position: relative;
+}
+
+.avatar img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.avatar-fallback {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .profile-info strong {
@@ -77,6 +94,14 @@
 	color: var(--text-primary);
 }
 
+.allergy-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	min-height: 28px;
+	align-items: center;
+}
+
 .allergy-tag {
 	display: inline-flex;
 	align-items: center;
@@ -86,6 +111,12 @@
 	color: #b42318;
 	font-weight: 600;
 	font-size: 0.85rem;
+	white-space: nowrap;
+}
+
+.no-allergies {
+	color: var(--text-secondary);
+	font-weight: 500;
 }
 
 .caregiver-section {
@@ -115,13 +146,57 @@
 	padding: 14px 16px;
 	background: rgba(10, 161, 116, 0.08);
 	backdrop-filter: blur(6px);
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.caregiver-card-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.caregiver-avatar {
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	overflow: hidden;
+	background: rgba(10, 161, 116, 0.12);
+	border: 1px solid rgba(10, 161, 116, 0.24);
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	color: var(--primary-color);
+}
+
+.caregiver-avatar img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.caregiver-avatar-fallback {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .caregiver-name {
 	font-weight: 600;
 	font-size: 1rem;
 	color: var(--text-primary);
-	margin-bottom: 8px;
+}
+
+.caregiver-headline {
+	color: var(--text-secondary);
+	font-size: 0.85rem;
+	margin-top: 2px;
 }
 
 .caregiver-meta {
@@ -184,6 +259,15 @@
 	.avatar {
 		width: 56px;
 		height: 56px;
+	}
+
+	.caregiver-card-header {
+		align-items: flex-start;
+	}
+
+	.caregiver-avatar {
+		width: 44px;
+		height: 44px;
 	}
 }
 

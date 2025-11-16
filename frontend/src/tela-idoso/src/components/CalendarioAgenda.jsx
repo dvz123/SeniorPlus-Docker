@@ -18,6 +18,37 @@ import { useMedication } from '../../../tela-cuidador/src/contexts/MedicationCon
 import { useToast } from '../../../contexts/ToastContext';
 import { useUser } from '../../../tela-cuidador/src/contexts/UserContext';
 import { api } from '../../../tela-auth/src/services/api';
+
+const toIsoDate = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) {
+    const year = value.getFullYear();
+    const month = `${value.getMonth() + 1}`.padStart(2, '0');
+    const day = `${value.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  if (typeof value === 'string') {
+    return value.slice(0, 10);
+  }
+  return null;
+};
+
+const filterMedicamentosByDate = (lista, targetDate) => {
+  const targetIso = toIsoDate(targetDate);
+  if (!targetIso) return [];
+  return (lista || []).filter((med) => {
+    const inicio = toIsoDate(med.dataInicio || med.data_inicio);
+    if (!inicio) return false;
+    const fim = toIsoDate(med.dataFim || med.data_fim);
+    const repetir = med.repetirDiariamente ?? med.repetir_diariamente ?? false;
+    const isAfterStart = inicio <= targetIso;
+    const isBeforeEnd = !fim || targetIso <= fim;
+    if (repetir || (fim && fim !== inicio)) {
+      return isAfterStart && isBeforeEnd;
+    }
+    return inicio === targetIso;
+  });
+};
  
 const addDays = (date, days) => {
   const result = new Date(date);
@@ -194,14 +225,15 @@ const CalendarioAgenda = () => {
   useEffect(() => {
     let cancelado = false;
     const fetchHoje = async () => {
-      if (!elderlyData?.id) return;
+      const cpf = elderlyData?.cpf || elderlyData?.id;
+      if (!cpf) return;
       try {
         setLoading(true);
         setErro("");
         lastToastRef.current = "";
         const [evtResp, medResp] = await Promise.allSettled([
-          api.getEventosDeHoje(elderlyData.id),
-          api.getMedicamentosDeHoje(elderlyData.id),
+          api.listEventosDeHoje(cpf),
+          api.listMedicamentos(cpf),
         ]);
         if (!cancelado) {
           if (evtResp.status === 'fulfilled' && Array.isArray(evtResp.value)) {
@@ -210,7 +242,7 @@ const CalendarioAgenda = () => {
             setEventosHojeApi([]);
           }
           if (medResp.status === 'fulfilled' && Array.isArray(medResp.value)) {
-            setMedicamentosHojeApi(medResp.value);
+            setMedicamentosHojeApi(filterMedicamentosByDate(medResp.value, new Date()));
           } else {
             setMedicamentosHojeApi([]);
           }
@@ -230,7 +262,7 @@ const CalendarioAgenda = () => {
     return () => {
       cancelado = true;
     };
-  }, [elderlyData?.id]);
+  }, [elderlyData?.cpf, elderlyData?.id]);
 
   return (
     <div className="calendario-container">

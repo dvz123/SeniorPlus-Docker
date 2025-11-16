@@ -1,9 +1,14 @@
-import { createContext, useState, useContext, useEffect } from "react"
+import { createContext, useState, useContext, useEffect, useCallback } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { useAuth } from "../../../tela-auth/src/contexts/AuthContext"
 import { useToast } from "../../../contexts/ToastContext"
 
 const MedicationContext = createContext()
+
+const LEGACY_MEDICATION_KEY = "medications"
+const SHARED_MEDICATION_KEY = "seniorplus:medications"
+const LEGACY_HISTORY_KEY = "medicationHistory"
+const SHARED_HISTORY_KEY = "seniorplus:medicationHistory"
 
 export const useMedication = () => useContext(MedicationContext)
 
@@ -46,58 +51,101 @@ export const MedicationProvider = ({ children }) => {
     return base
   }
 
-  const [medications, setMedications] = useState(() => {
-    // Verificar se o usuário está autenticado (usa authToken gerenciado pelo AuthContext)
-    const isAuthenticated = localStorage.getItem("authToken") !== null || localStorage.getItem("isLoggedIn") === 'true'
-
-    if (!isAuthenticated) {
-      return []
-    }
-
-    const savedMedications = localStorage.getItem("medications")
-    if (!savedMedications) return []
-
+  const parseStoredValue = useCallback((raw) => {
+    if (!raw) return []
     try {
-      const parsed = JSON.parse(savedMedications)
-      return Array.isArray(parsed) ? parsed.map((med) => normalizeMedication(med)).filter(Boolean) : []
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed
+      if (Array.isArray(parsed?.items)) return parsed.items
+      return []
     } catch (error) {
-      console.error("Erro ao carregar medicamentos do storage:", error)
+      console.error("Erro ao ler dados compartilhados:", error)
       return []
     }
-  })
+  }, [])
 
-  const [medicationHistory, setMedicationHistory] = useState(() => {
-    // Verificar se o usuário está autenticado (usa authToken gerenciado pelo AuthContext)
-    const isAuthenticated = localStorage.getItem("authToken") !== null || localStorage.getItem("isLoggedIn") === 'true'
+  const loadInitialMedications = useCallback(() => {
+    if (typeof window === "undefined") return []
+    const shared = parseStoredValue(window.localStorage.getItem(SHARED_MEDICATION_KEY))
+    if (shared.length > 0) return shared.map((med) => normalizeMedication(med)).filter(Boolean)
 
-    if (!isAuthenticated) {
-      return []
-    }
+    const legacy = parseStoredValue(window.localStorage.getItem(LEGACY_MEDICATION_KEY))
+    if (legacy.length > 0) return legacy.map((med) => normalizeMedication(med)).filter(Boolean)
 
-    const savedHistory = localStorage.getItem("medicationHistory")
-    return savedHistory ? JSON.parse(savedHistory) : []
-  })
+    return []
+  }, [parseStoredValue])
+
+  const loadInitialHistory = useCallback(() => {
+    if (typeof window === "undefined") return []
+    const shared = parseStoredValue(window.localStorage.getItem(SHARED_HISTORY_KEY))
+    if (shared.length > 0) return shared
+
+    const legacy = parseStoredValue(window.localStorage.getItem(LEGACY_HISTORY_KEY))
+    return legacy
+  }, [parseStoredValue])
+
+  const [medications, setMedications] = useState(() => loadInitialMedications())
+
+  const [medicationHistory, setMedicationHistory] = useState(() => loadInitialHistory())
 
   // Limpar dados quando o usuário fizer logout
   useEffect(() => {
     if (!currentUser) {
-      setMedications([])
-      setMedicationHistory([])
+      setMedications(loadInitialMedications())
+      setMedicationHistory(loadInitialHistory())
     }
-  }, [currentUser])
+  }, [currentUser, loadInitialHistory, loadInitialMedications])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined
+
+    const handleStorage = (event) => {
+      if (event.key === SHARED_MEDICATION_KEY && event.newValue) {
+        setMedications(parseStoredValue(event.newValue).map((med) => normalizeMedication(med)).filter(Boolean))
+      }
+      if (event.key === SHARED_HISTORY_KEY && event.newValue) {
+        setMedicationHistory(parseStoredValue(event.newValue))
+      }
+    }
+
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [parseStoredValue])
 
   // Salvar dados no localStorage quando mudarem
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem("medications", JSON.stringify(medications))
+    if (typeof window === "undefined") return
+    try {
+      window.localStorage.setItem(LEGACY_MEDICATION_KEY, JSON.stringify(medications))
+    } catch (error) {
+      console.warn("Falha ao persistir medicamentos (legacy)", error)
     }
-  }, [medications, currentUser])
+    try {
+      window.localStorage.setItem(
+        SHARED_MEDICATION_KEY,
+        JSON.stringify({ items: medications, updatedAt: new Date().toISOString() }),
+      )
+    } catch (error) {
+      console.warn("Falha ao persistir medicamentos compartilhados", error)
+    }
+  }, [medications])
 
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem("medicationHistory", JSON.stringify(medicationHistory))
+    if (typeof window === "undefined") return
+    try {
+      window.localStorage.setItem(LEGACY_HISTORY_KEY, JSON.stringify(medicationHistory))
+    } catch (error) {
+      console.warn("Falha ao persistir histórico de medicamentos (legacy)", error)
     }
-  }, [medicationHistory, currentUser])
+    try {
+      window.localStorage.setItem(
+        SHARED_HISTORY_KEY,
+        JSON.stringify({ items: medicationHistory, updatedAt: new Date().toISOString() }),
+      )
+    } catch (error) {
+      console.warn("Falha ao persistir histórico compartilhado", error)
+    }
+  }, [medicationHistory])
 
   const addMedication = (name, dosage, frequency, time, startDate, endDate, instructions, notes = "") => {
     const newMedication = normalizeMedication({
@@ -145,31 +193,66 @@ export const MedicationProvider = ({ children }) => {
     }
   }
 
-  const recordMedicationTaken = (medicationId, taken, notes = "") => {
+  const recordMedicationTaken = (medicationId, taken, meta, extra) => {
     const medication = medications.find((med) => med.id === medicationId)
 
     if (!medication) {
       showError("Medicamento não encontrado!")
-      return
+      return null
     }
+
+    let notes = ""
+    let slot = ""
+
+    if (typeof meta === "string" || meta === undefined) {
+      notes = typeof meta === "string" ? meta : ""
+      if (typeof extra === "string") {
+        slot = extra
+      }
+    } else if (meta && typeof meta === "object") {
+      notes = meta.notes || meta.observacao || ""
+      slot = meta.timeSlot || meta.slot || meta.horario || meta.schedule || ""
+    }
+
+    if (!notes && slot) {
+      notes = `Horário ${slot}`
+    }
+
+    const normalizedSlot = slot ? slot.trim() : ""
+    const now = new Date()
+    const dateIso = now.toISOString().split("T")[0]
+    const timeISO = now.toTimeString().split(" ")[0].substring(0, 5)
 
     const newRecord = {
       id: uuidv4(),
       medicationId,
       medicationName: medication.name,
-      date: new Date().toISOString().split("T")[0],
-      time: new Date().toTimeString().split(" ")[0].substring(0, 5),
+      date: dateIso,
+      time: timeISO,
       taken,
+      slot: normalizedSlot || null,
       notes,
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
     }
 
-    setMedicationHistory([...medicationHistory, newRecord])
+    setMedicationHistory((prev) => {
+      if (!normalizedSlot) {
+        return [...prev, newRecord]
+      }
+      const filtered = prev.filter((record) => {
+        if (record.medicationId !== medicationId) return true
+        if (record.date !== dateIso) return true
+        const recordSlot = (record.slot || record.timeSlot || "").trim()
+        return recordSlot !== normalizedSlot
+      })
+      return [...filtered, newRecord]
+    })
 
+    const readableSlot = normalizedSlot ? ` (${normalizedSlot})` : ""
     if (taken) {
-      showSuccess(`Medicamento ${medication.name} registrado como tomado!`)
+      showSuccess(`Medicamento ${medication.name}${readableSlot} registrado como tomado!`)
     } else {
-      showWarning(`Medicamento ${medication.name} registrado como não tomado!`)
+      showWarning(`Medicamento ${medication.name}${readableSlot} registrado como não tomado!`)
     }
 
     return newRecord

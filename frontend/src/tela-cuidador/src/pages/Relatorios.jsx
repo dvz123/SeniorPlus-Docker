@@ -15,6 +15,7 @@ function Relatorios() {
   const { darkMode } = useTheme()
   // const [setReportType] = useState("events")
   const [chartType, setChartType] = useState("bar")
+  const [eventChartType, setEventChartType] = useState("bar")
   const [dateRange, setDateRange] = useState({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     end: new Date().toISOString().split("T")[0],
@@ -33,7 +34,10 @@ function Relatorios() {
   // }
 
   const handleChartTypeChange = (e) => {
-    setChartType(e.target.value)
+    if (activeTab !== "eventos") return
+    const value = e.target.value
+    setChartType(value)
+    setEventChartType(value)
   }
 
   const handleDateRangeChange = (e) => {
@@ -46,6 +50,11 @@ function Relatorios() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab)
+    if (tab === "eventos") {
+      setChartType(eventChartType)
+    } else {
+      setChartType("pie")
+    }
   }
 
   // Filter events by date range
@@ -270,12 +279,7 @@ function Relatorios() {
     medicationCtx.clearRect(0, 0, medicationWidth, medicationHeight)
     adherenceCtx.clearRect(0, 0, adherenceWidth, adherenceHeight)
 
-    if (chartType === "bar") {
-      renderMedicationBarChart(medicationSurface)
-    } else {
-      renderMedicationPieChart(medicationSurface)
-    }
-
+    renderMedicationPieChart(medicationSurface)
     renderAdherenceChart(adherenceSurface)
   }
 
@@ -578,84 +582,6 @@ function Relatorios() {
     })
   }
 
-  // Render medication bar chart
-  const renderMedicationBarChart = ({ ctx, width: chartWidth, height: chartHeight }) => {
-    const medicationUsage = {}
-
-    if (!medicationHistory || medicationHistory.length === 0) {
-      // No data to display
-      ctx.font = "16px Arial"
-      ctx.fillStyle = getTextColor()
-      ctx.textAlign = "center"
-      ctx.fillText("Sem dados de medicamentos para exibir", chartWidth / 2, chartHeight / 2)
-      return
-    }
-
-    medicationHistory.forEach((history) => {
-      if (!history) return
-
-      const historyDate = new Date(history.date)
-      const startDate = new Date(dateRange.start)
-      const endDate = new Date(dateRange.end)
-
-      if (historyDate >= startDate && historyDate <= endDate && history.taken) {
-        const medName = history.medicationName || `Medicamento ${history.medicationId}`
-        if (!medicationUsage[medName]) {
-          medicationUsage[medName] = 0
-        }
-        medicationUsage[medName] += 1
-      }
-    })
-
-    const medicationLabels = Object.keys(medicationUsage)
-
-    if (medicationLabels.length === 0) {
-      // No data to display
-      ctx.font = "16px Arial"
-      ctx.fillStyle = getTextColor()
-      ctx.textAlign = "center"
-  ctx.fillText("Sem dados de medicamentos para exibir", chartWidth / 2, chartHeight / 2)
-      return
-    }
-
-    const medicationData = Object.values(medicationUsage)
-    const medicationColors = getMedicationColors(medicationLabels)
-
-    const barWidth = chartWidth / (medicationLabels.length * 2)
-    const maxValue = Math.max(...medicationData, 1)
-    const barHeightRatio = (chartHeight - 60) / maxValue
-
-    // Draw title
-    ctx.font = "16px Arial"
-    ctx.fillStyle = getTextColor()
-    ctx.textAlign = "center"
-    ctx.fillText("Uso de Medicamentos", chartWidth / 2, 20)
-
-    // Draw bars
-    medicationLabels.forEach((label, index) => {
-      const barHeight = medicationData[index] * barHeightRatio
-      const x = index * (barWidth * 2) + barWidth / 2
-      const y = chartHeight - barHeight - 30
-
-      // Draw bar
-      ctx.fillStyle = medicationColors[index]
-      ctx.fillRect(x, y, barWidth, barHeight)
-
-      // Draw label (truncate if too long)
-      ctx.fillStyle = getTextColor()
-      ctx.font = "12px Arial"
-      ctx.textAlign = "center"
-      const truncatedLabel = label.length > 10 ? label.substring(0, 8) + "..." : label
-      ctx.fillText(truncatedLabel, x + barWidth / 2, chartHeight - 10)
-
-      // Draw value
-      ctx.fillStyle = getTextColor()
-      ctx.font = "12px Arial"
-      ctx.textAlign = "center"
-      ctx.fillText(medicationData[index], x + barWidth / 2, y - 5)
-    })
-  }
-
   // Render medication pie chart
   const renderMedicationPieChart = ({ ctx, width: chartWidth, height: chartHeight }) => {
     const medicationUsage = {}
@@ -931,13 +857,15 @@ function Relatorios() {
               <label htmlFor="dateEnd">Até:</label>
               <input type="date" id="dateEnd" name="end" value={dateRange.end} onChange={handleDateRangeChange} />
             </div>
-            <div className="filter-group">
-              <label htmlFor="chartType">Tipo de Gráfico:</label>
-              <select id="chartType" value={chartType} onChange={handleChartTypeChange}>
-                <option value="bar">Barras</option>
-                <option value="pie">Pizza/Donut</option>
-              </select>
-            </div>
+            {activeTab === "eventos" && (
+              <div className="filter-group">
+                <label htmlFor="chartType">Tipo de Gráfico:</label>
+                <select id="chartType" value={chartType} onChange={handleChartTypeChange}>
+                  <option value="bar">Barras</option>
+                  <option value="pie">Pizza/Donut</option>
+                </select>
+              </div>
+            )}
             <button className="export-button" onClick={exportToCSV} disabled={isExporting}>
               {isExporting ? "Exportando..." : "Exportar CSV"}
             </button>

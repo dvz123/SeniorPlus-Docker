@@ -1,25 +1,30 @@
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 import { Moon, Sun } from "lucide-react"
 import { useAuth } from "../../../tela-auth/src/contexts/AuthContext"
 import { useTheme } from "../../../contexts/ThemeContext"
 import NotificationCenter from "../../../components/NotificationCenter"
 import "../styles/Header.css"
 import Sidebar from "./SidebarDrawer"
+import { useUser } from "../../../tela-cuidador/src/contexts/UserContext"
+import { useResidentIdentity } from "../hooks/useResidentIdentity"
 
 export default function IdosoHeader() {
   const { currentUser } = useAuth()
+  const userContext = useUser()
+  const elderlyData = userContext?.elderlyData
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { darkMode, toggleDarkMode } = useTheme()
 
-  const displayName =
-    currentUser?.name || currentUser?.nome || currentUser?.fullName || currentUser?.username || "Olá!"
+  const { name: displayName, avatarUrl, initials } = useResidentIdentity({
+    currentUser,
+    fallbackProfile: elderlyData,
+  })
 
-  const getInitials = (name) => {
-    if (!name) return ""
-    const parts = name.trim().split(/\s+/)
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-  }
+  const personaLabel = useMemo(() => {
+    if (currentUser?.role === "elderly") return "Perfil do idoso"
+    if (currentUser?.role === "caregiver") return "Assistido"
+    return "Perfil"
+  }, [currentUser?.role])
 
   return (
     <>
@@ -36,6 +41,7 @@ export default function IdosoHeader() {
         </div>
 
         <div className="idoso-header__brand" aria-live="polite">
+          <span className="idoso-header__eyebrow" aria-hidden="true">{personaLabel}</span>
           <span className="idoso-header__logo">Senior+</span>
           <span className="idoso-header__welcome">{displayName}</span>
         </div>
@@ -50,11 +56,36 @@ export default function IdosoHeader() {
             aria-label="Abrir menu do perfil"
             onClick={() => setSidebarOpen((open) => !open)}
           >
-            <span className="idoso-header__initials">{getInitials(displayName)}</span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={`Foto de ${displayName}`}
+                onError={(event) => {
+                  event.currentTarget.style.display = "none"
+                  const fallback = event.currentTarget.parentElement?.querySelector(
+                    ".idoso-header__initials",
+                  )
+                  if (fallback) fallback.style.display = "flex"
+                }}
+              />
+            ) : null}
+            <span
+              className="idoso-header__initials"
+              style={{ display: avatarUrl ? "none" : "flex" }}
+              aria-hidden={Boolean(avatarUrl)}
+            >
+              {initials || "ID"}
+            </span>
           </button>
         </div>
       </header>
-      <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(false)} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        toggleSidebar={() => setSidebarOpen(false)}
+        residentName={displayName}
+        residentAvatar={avatarUrl}
+        residentInitials={initials}
+      />
     </>
   )
 }

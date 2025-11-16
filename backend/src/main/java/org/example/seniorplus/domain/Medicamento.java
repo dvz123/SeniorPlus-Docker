@@ -86,6 +86,14 @@ public class Medicamento extends BaseEntity {
         this.intervaloMinutos = intervaloMinutos;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getCpf() {
         return cpf;
     }
@@ -124,6 +132,14 @@ public class Medicamento extends BaseEntity {
 
     public void setInstrucoes(String instrucoes) {
         this.instrucoes = instrucoes;
+    }
+
+    public List<LocalTime> getHorarios() {
+        return horarios;
+    }
+
+    public void setHorarios(List<LocalTime> horarios) {
+        this.horarios = horarios;
     }
 
     public LocalDate getDataInicio() {
@@ -206,12 +222,15 @@ public class Medicamento extends BaseEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Medicamento that = (Medicamento) o;
-        return Objects.equals(cpf, that.cpf);
+        if (id == null || that.id == null) {
+            return Objects.equals(cpf, that.cpf) && Objects.equals(nomeMedicamento, that.nomeMedicamento);
+        }
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(cpf);
+        return Objects.hash(id);
     }
 
     public List<LocalTime> gerarHorariosNasProximas2Horas() {

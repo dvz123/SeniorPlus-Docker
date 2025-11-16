@@ -1,16 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import '../styles/MedicamentosHoje.css';
 import { Pill } from 'lucide-react';
 import { useMedication } from '../../../tela-cuidador/src/contexts/MedicationContext';
 
 const MedicamentosHoje = () => {
-  const { getTodayMedications, recordMedicationTaken } = useMedication();
+  const { getTodayMedications, recordMedicationTaken, medicationHistory } = useMedication();
   const [medsTomados, setMedsTomados] = useState({});
 
   const hoje = getTodayMedications();
   const medSignature = JSON.stringify(
     hoje.map((med) => ({ id: med.id, times: med.times, time: med.time })),
   );
+
+  const todayISO = new Date().toISOString().split('T')[0];
+
+  const statusPorMedicamento = useMemo(() => {
+    const map = new Map();
+    if (!Array.isArray(medicationHistory)) {
+      return map;
+    }
+
+    medicationHistory
+      .filter((record) => record.date === todayISO)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      .forEach((record) => {
+        const slot = (record.slot || record.timeSlot || '').trim();
+        if (!slot) return;
+        const key = `${record.medicationId}-${slot}`;
+        map.set(key, !!record.taken);
+      });
+
+    return map;
+  }, [medicationHistory, todayISO]);
 
   useEffect(() => {
     setMedsTomados((prev) => {
@@ -26,13 +47,19 @@ const MedicamentosHoje = () => {
 
         times.forEach((hora) => {
           const key = `${med.id}-${hora}`;
-          atualizados[key] = key in prev ? prev[key] : false;
+          if (statusPorMedicamento.has(key)) {
+            atualizados[key] = statusPorMedicamento.get(key);
+          } else if (key in prev) {
+            atualizados[key] = prev[key];
+          } else {
+            atualizados[key] = false;
+          }
         });
       });
 
       return atualizados;
     });
-  }, [medSignature]);
+  }, [medSignature, statusPorMedicamento]);
 
   const toggleTomado = (medicamento, horario) => {
     const key = `${medicamento.id}-${horario}`;
@@ -41,7 +68,7 @@ const MedicamentosHoje = () => {
       const atualizado = { ...prev, [key]: !atual };
 
       // Registrar no histórico para manter cuidador e idoso sincronizados
-      recordMedicationTaken(medicamento.id, !atual, `Horário ${horario}`);
+      recordMedicationTaken(medicamento.id, !atual, { timeSlot: horario });
 
       return atualizado;
     });

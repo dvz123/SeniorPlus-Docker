@@ -4,15 +4,33 @@ import { Link, useNavigate } from "react-router-dom"
 import "../styles/Sidebar.css"
 import { useAuth } from "../../../tela-auth/src/contexts/AuthContext"
 import { useChat } from "../../../contexts/ChatContext"
+import { useCaregiverProfile } from "../contexts/CaregiverProfileContext"
 
 function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate()
   const { currentUser, logout } = useAuth()
+  const { caregiverProfile } = useCaregiverProfile()
   const { openChat } = useChat()
+  const handleOpenChat = () => {
+    if (toggleSidebar) {
+      toggleSidebar()
+      // Delay para garantir que a sidebar conclua a animação antes de abrir o chat
+      setTimeout(() => openChat({ source: "sidebar" }), 180)
+      return
+    }
+    openChat({ source: "sidebar" })
+  }
 
   // Obter nome do usuário autenticado. Vários backends usam 'name', 'nome' ou 'fullName'
   const displayName =
-    currentUser?.name || currentUser?.nome || currentUser?.fullName || currentUser?.username || "Usuário"
+    caregiverProfile?.displayName ||
+    currentUser?.name ||
+    currentUser?.nome ||
+    currentUser?.fullName ||
+    currentUser?.username ||
+    "Usuário"
+
+  const avatarUrl = caregiverProfile?.photoUrl || currentUser?.photoUrl || currentUser?.fotoUrl || null
 
   const getInitials = (name) => {
     if (!name) return "U"
@@ -69,8 +87,24 @@ function Sidebar({ isOpen, toggleSidebar }) {
         <div className="sidebar-content">
           <div className="user-info">
             <div className="avatar-large">
-              <img src="/placeholder.svg" alt="Foto do cuidador" />
-              <div className="avatar-fallback-large">{getInitials(displayName)}</div>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={`Foto de ${displayName}`}
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none"
+                    const fallback = event.currentTarget.parentElement?.querySelector(".avatar-fallback-large")
+                    if (fallback) fallback.style.display = "flex"
+                  }}
+                />
+              ) : null}
+              <div
+                className="avatar-fallback-large"
+                style={{ display: avatarUrl ? "none" : "flex" }}
+                aria-hidden={Boolean(avatarUrl)}
+              >
+                {getInitials(displayName)}
+              </div>
             </div>
             <div className="user-details">
               <h3>{displayName}</h3>
@@ -205,7 +239,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
               </svg>
               Emergência
             </Link>
-            <div className="nav-item chat-nav-item" onClick={() => openChat({ source: "sidebar" })}>
+            <div className="nav-item chat-nav-item" onClick={handleOpenChat}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"

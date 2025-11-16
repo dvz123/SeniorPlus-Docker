@@ -20,6 +20,8 @@ export const NotificationProvider = ({ children }) => {
   const { medications } = useMedication()
   const { events } = useEvents()
   const notificationLockRef = useRef(new Set())
+  const audioContextRef = useRef(null)
+  const lastSoundRef = useRef(0)
 
   // Salvar notificações no localStorage
   useEffect(() => {
@@ -65,6 +67,51 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if ("Notification" in window) {
       setPermission(Notification.permission)
+    }
+  }, [])
+
+  const playNotificationSound = useCallback(() => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      if (!AudioContextClass) {
+        return
+      }
+
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContextClass()
+      }
+
+      const ctx = audioContextRef.current
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {})
+      }
+
+      const now = Date.now()
+      if (now - lastSoundRef.current < 2500) {
+        return
+      }
+
+      const oscillator = ctx.createOscillator()
+      const gain = ctx.createGain()
+
+      oscillator.type = "triangle"
+      const startTime = ctx.currentTime
+      oscillator.frequency.setValueAtTime(880, startTime)
+      oscillator.frequency.exponentialRampToValueAtTime(660, startTime + 0.4)
+
+      gain.gain.setValueAtTime(0.0001, startTime)
+      gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.9)
+
+      oscillator.connect(gain)
+      gain.connect(ctx.destination)
+
+      oscillator.start(startTime)
+      oscillator.stop(startTime + 0.95)
+
+      lastSoundRef.current = now
+    } catch (error) {
+      console.warn("Falha ao tocar alerta sonoro", error)
     }
   }, [])
 
@@ -192,6 +239,7 @@ export const NotificationProvider = ({ children }) => {
 
         // Adicionar à lista de notificações
         addNotification(notification)
+        playNotificationSound()
         notificationLockRef.current.add(notificationKey)
 
         // Enviar notificação do navegador se permitido
@@ -262,6 +310,7 @@ export const NotificationProvider = ({ children }) => {
 
         // Adicionar à lista de notificações
         addNotification(notification)
+        playNotificationSound()
         notificationLockRef.current.add(notificationKey)
 
         // Enviar notificação do navegador se permitido

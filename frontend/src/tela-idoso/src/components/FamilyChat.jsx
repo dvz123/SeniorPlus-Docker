@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MessageSquare, Smile, Send } from "lucide-react";
+import { MessageCircleHeart, Smile, Send } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import "../styles/FamilyChat.css";
 import { api } from '../../../tela-auth/src/services/api';
@@ -14,14 +14,49 @@ const FamilyChat = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSending, setIsSending] = useState(false);
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
+  const normalizeIdentifier = (value) => (value || "").toString().replace(/\D/g, "");
+  const normalizeActor = (value) => (value || "").toString().trim().toLowerCase();
+
+  const isCurrentUser = (value) => {
+    if (!value) return false;
+    const normalized = normalizeActor(value);
+    return [currentUser?.name, currentUser?.email, currentUser?.username]
+      .filter(Boolean)
+      .some((candidate) => normalizeActor(candidate) === normalized);
+  };
+
+  const resolveSenderRole = (remetente, destinatario) => {
+    const normalizedSender = normalizeActor(remetente);
+    const normalizedRecipient = normalizeActor(destinatario);
+
+    if (["caregiver", "cuidador", "cuidadora"].includes(normalizedSender)) {
+      return "caregiver";
+    }
+    if (["elderly", "idoso", "idosa"].includes(normalizedSender)) {
+      return "elderly";
+    }
+    if (isCurrentUser(remetente)) {
+      return "elderly";
+    }
+    if (isCurrentUser(destinatario)) {
+      return "caregiver";
+    }
+    if (["familia", "family"].includes(normalizedSender)) {
+      return "caregiver";
+    }
+    return "caregiver";
+  };
 
   // Carrega cache local primeiro para resposta instantânea
   useEffect(() => {
-    if (!user?.id) return;
+    const normalizedCpf = normalizeIdentifier(currentUser?.cpf);
+    const fallbackId = currentUser?.id ? String(currentUser.id) : null;
+    const storageKey = normalizedCpf || fallbackId;
+    if (!storageKey) return;
     try {
-      const raw = localStorage.getItem(`familyChat_${user.id}`);
+      const raw = localStorage.getItem(`familyChat_${storageKey}`);
       if (raw) {
         const cached = JSON.parse(raw);
         if (Array.isArray(cached) && cached.length > 0) {
@@ -31,21 +66,30 @@ const FamilyChat = () => {
         }
       }
     } catch (_) {/* ignore */}
-  }, [user?.id]);
+  }, [currentUser?.cpf, currentUser?.id]);
 
   // Busca periódica no backend
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!user?.id) return;
+      const userCpf = normalizeIdentifier(currentUser?.cpf) || null;
+      const userId = currentUser?.id ? String(currentUser.id) : null;
+      if (!userCpf && !userId) return;
       try {
         setIsLoading(true);
-        const data = await api.getMensagensDoIdoso(user.id);
+        const data = await api.getMensagensDoIdoso({ cpf: userCpf, id: userId });
         const mapped = Array.isArray(data)
           ? data.map((m) => ({
-              id: m.id,
+              id: m.id ?? `srv_${Date.now()}_${Math.random()}`,
               fromId: m.fromId || null,
               toId: m.toId || null,
-              senderRole: (m.remetente === 'caregiver' || m.remetente === 'elderly') ? m.remetente : 'family',
+              fromCpf: normalizeIdentifier(m.remetenteCpf || m.fromCpf) || m.remetenteCpf || m.fromCpf || null,
+              toCpf: normalizeIdentifier(m.destinatarioCpf || m.toCpf) || m.destinatarioCpf || m.toCpf || null,
+              idosoCpf:
+                normalizeIdentifier(m.idosoCpf || (m.idoso && m.idoso.cpf)) ||
+                (m.idoso && String(m.idoso.id)) ||
+                userCpf ||
+                userId,
+              senderRole: resolveSenderRole(m.remetente, m.destinatario),
               message: m.conteudo || m.message || '',
               timestamp: m.dataHora || m.timestamp || new Date().toISOString(),
               read: m.lida || m.read || false,
@@ -53,8 +97,21 @@ const FamilyChat = () => {
           : [];
         // Ordena por timestamp ASC
         const sorted = mapped.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-        setMessages(sorted);
-        try { localStorage.setItem(`familyChat_${user.id}`, JSON.stringify(sorted)); } catch(_) {}
+        setMessages((prev) => {
+          const byId = new Map(sorted.map((msg) => [String(msg.id), msg]));
+          prev.forEach((existing) => {
+            const key = String(existing.id ?? '');
+            if (byId.has(key)) return;
+            if (key.startsWith('tmp_')) {
+              byId.set(key, existing);
+            }
+          });
+          const merged = Array.from(byId.values()).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+          const storageKey = `familyChat_${userCpf || userId}`;
+          try { localStorage.setItem(storageKey, JSON.stringify(merged)); } catch(_) {}
+          return merged;
+        });
+        setError(null);
         // Ajusta visibleCount para mostrar pelo menos as últimas 30 (ou total se menor)
         setVisibleCount((prev) => {
           const min = 30;
@@ -71,7 +128,7 @@ const FamilyChat = () => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 10000);
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [currentUser?.cpf, currentUser?.id]);
   const [newMessage, setNewMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -91,46 +148,61 @@ const FamilyChat = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user?.id) return;
+    const userCpf = normalizeIdentifier(currentUser?.cpf) || null;
+    const userId = currentUser?.id ? String(currentUser.id) : null;
+    if (!newMessage.trim() || (!userCpf && !userId)) return;
     setIsSending(true);
     const mensagem = {
       conteudo: newMessage,
-      remetente: user.name || user.email || 'Idoso',
-      destinatario: 'Família',
-      idoso: { id: user.id }
+      remetente: currentUser?.name || currentUser?.email || 'Idoso',
+      destinatario: 'Cuidador',
     };
+    if (currentUser?.id) {
+      mensagem.idoso = { id: currentUser.id };
+    }
+    if (userCpf) {
+      mensagem.idosoCpf = userCpf;
+    }
 
     // Otimisticamente adiciona mensagem local
     const optimistic = {
       id: `tmp_${Date.now()}`,
-      fromId: user.id,
+      fromId: currentUser?.id || null,
       toId: null,
-      senderRole: 'elderly',
+      fromCpf: userCpf || userId,
+      toCpf: null,
+      idosoCpf: userCpf || userId,
+      senderRole: resolveSenderRole(mensagem.remetente, mensagem.destinatario),
       message: newMessage,
       timestamp: new Date().toISOString(),
       read: false,
     }
     setMessages((prev) => {
       const next = [...prev, optimistic];
-      try { localStorage.setItem(`familyChat_${user.id}`, JSON.stringify(next)); } catch(_) {}
+      const storageKey = `familyChat_${userCpf || userId}`;
+      try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch(_) {}
       return next;
     })
 
     try {
-      const novaMensagem = await api.enviarMensagem(mensagem);
+      const novaMensagem = await api.enviarMensagem({ cpf: userCpf, id: userId }, mensagem);
       // Mapear resposta do backend para a mensagem real
       const mapped = {
-        id: novaMensagem.id,
-        fromId: novaMensagem.fromId || user.id,
+        id: novaMensagem.id ?? optimistic.id,
+        fromId: novaMensagem.fromId || currentUser?.id || null,
         toId: novaMensagem.toId || null,
-        senderRole: (novaMensagem.remetente === 'caregiver' || novaMensagem.remetente === 'elderly') ? novaMensagem.remetente : 'elderly',
+        fromCpf: normalizeIdentifier(novaMensagem.fromCpf) || novaMensagem.fromCpf || userCpf || userId,
+        toCpf: novaMensagem.toCpf || null,
+        idosoCpf: normalizeIdentifier(novaMensagem.idosoCpf) || novaMensagem.idosoCpf || userCpf || userId,
+        senderRole: resolveSenderRole(novaMensagem.remetente, novaMensagem.destinatario),
         message: novaMensagem.conteudo || newMessage,
         timestamp: novaMensagem.dataHora || new Date().toISOString(),
         read: novaMensagem.lida || false,
       }
       setMessages((prev) => {
         const next = prev.map((m) => (m.id === optimistic.id ? mapped : m));
-        try { localStorage.setItem(`familyChat_${user.id}`, JSON.stringify(next)); } catch(_) {}
+        const storageKey = `familyChat_${userCpf || userId}`;
+        try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch(_) {}
         return next;
       });
       setNewMessage("");
@@ -148,7 +220,8 @@ const FamilyChat = () => {
       // opcional: marcar mensagem como falha; por enquanto, remove o otimistic
       setMessages((prev) => {
         const next = prev.filter((m) => m.id !== optimistic.id);
-        try { localStorage.setItem(`familyChat_${user.id}`, JSON.stringify(next)); } catch(_) {}
+        const storageKey = `familyChat_${userCpf || userId}`;
+        try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch(_) {}
         return next;
       });
     } finally {
@@ -161,20 +234,44 @@ const FamilyChat = () => {
     function onRemoteMessage(e) {
       const msg = e.detail
       if (!msg || !msg.id) return
-      // Apenas adiciona se for relevante para este usuário/idoso
-      if (msg.toId === user.id || msg.fromId === user.id || msg.senderRole !== 'caregiver') {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
-          const next = [...prev, msg].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-          try { localStorage.setItem(`familyChat_${user.id}`, JSON.stringify(next)); } catch(_) {}
-          return next;
-        })
+      const normalizedCpf = normalizeIdentifier(currentUser?.cpf)
+      const fallbackId = currentUser?.id ? String(currentUser.id) : null
+      const storageKey = normalizedCpf || fallbackId
+      const matchesCurrentElderly = () => {
+        if (!storageKey) return false
+        const candidateCpfs = [msg.idosoCpf, msg.toCpf, msg.fromCpf].map(normalizeIdentifier).filter(Boolean)
+        if (normalizedCpf && candidateCpfs.length && candidateCpfs.includes(normalizedCpf)) {
+          return true
+        }
+        const candidateIds = [msg.idosoId, msg.toId, msg.fromId]
+          .map((value) => (value !== undefined && value !== null ? String(value) : null))
+          .filter(Boolean)
+        if (fallbackId && candidateIds.length && candidateIds.includes(fallbackId)) {
+          return true
+        }
+        if (!normalizedCpf && !fallbackId) {
+          return msg.senderRole !== 'caregiver'
+        }
+        return !normalizedCpf && candidateCpfs.length === 0
       }
+
+      if (!matchesCurrentElderly()) {
+        return
+      }
+
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        const next = [...prev, msg].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        if (storageKey) {
+          try { localStorage.setItem(`familyChat_${storageKey}`, JSON.stringify(next)); } catch(_) {}
+        }
+        return next;
+      })
     }
 
     window.addEventListener('message:received', onRemoteMessage)
     return () => window.removeEventListener('message:received', onRemoteMessage)
-  }, [user?.id])
+  }, [currentUser?.cpf, currentUser?.id])
 
   const onEmojiClick = (emojiData) => {
     setNewMessage((prev) => prev + emojiData.emoji);
@@ -204,8 +301,8 @@ const FamilyChat = () => {
   return (
     <div className="family-chat-card">
       <div className="family-chat-header">
-        <MessageSquare size={20} />
-        <span>Mensagens da Família</span>
+        <MessageCircleHeart size={20} />
+        <span>Mensagens com o cuidador</span>
       </div>
 
       <div className="family-chat-body" ref={chatBodyRef}>
@@ -215,7 +312,7 @@ const FamilyChat = () => {
           <ErrorMessage message={error} />
         ) : messages.length === 0 ? (
           <div className="family-message empty">
-            <span>Nenhuma mensagem ainda.</span>
+            <span>Inicie uma conversa com o cuidador.</span>
           </div>
         ) : (
           (() => {
@@ -241,7 +338,7 @@ const FamilyChat = () => {
               className={`family-message ${msg.senderRole === "elderly" ? "own-message" : ""}`}
             >
               <div className="message-header">
-                <p className="from">{msg.senderRole === 'elderly' ? 'Você' : (msg.senderRole === 'caregiver' ? 'Cuidador' : 'Família')}</p>
+                <p className="from">{msg.senderRole === 'elderly' ? 'Você' : 'Cuidador'}</p>
               </div>
               <div className="message-content">
                 <p>{msg.message}</p>
@@ -273,7 +370,7 @@ const FamilyChat = () => {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Escreva sua resposta..."
+          placeholder="Envie uma mensagem para o cuidador..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}

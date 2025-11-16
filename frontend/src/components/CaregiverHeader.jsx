@@ -5,14 +5,23 @@ import NotificationCenter from "./NotificationCenter"
 import { useChat } from "../contexts/ChatContext"
 import "../styles/CaregiverHeader.css"
 import { useAuth } from "../tela-auth/src/contexts/AuthContext"
+import { useCaregiverProfile } from "../tela-cuidador/src/contexts/CaregiverProfileContext"
 
 function CaregiverHeader({ toggleSidebar }) {
   const { darkMode, toggleDarkMode } = useTheme()
   const { toggleChat } = useChat()
   const { currentUser } = useAuth()
+  const { caregiverProfile } = useCaregiverProfile()
 
   const displayName =
-    currentUser?.name || currentUser?.nome || currentUser?.fullName || currentUser?.username || "Usuário"
+    caregiverProfile?.displayName ||
+    currentUser?.name ||
+    currentUser?.nome ||
+    currentUser?.fullName ||
+    currentUser?.username ||
+    "Usuário"
+
+  const avatarUrl = caregiverProfile?.photoUrl || currentUser?.photoUrl || currentUser?.fotoUrl || null
 
   const getInitials = (name) => {
     if (!name) return "U"
@@ -116,8 +125,24 @@ function CaregiverHeader({ toggleSidebar }) {
         <NotificationCenter />
 
         <div className="avatar" onClick={toggleSidebar} title={displayName}>
-          <img src="/placeholder.svg?height=40&width=40" alt="Foto do cuidador" />
-          <div className="avatar-fallback">{getInitials(displayName)}</div>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={`Foto de ${displayName}`}
+              onError={(event) => {
+                event.currentTarget.style.display = "none"
+                const fallback = event.currentTarget.parentElement?.querySelector(".avatar-fallback")
+                if (fallback) fallback.style.display = "flex"
+              }}
+            />
+          ) : null}
+          <div
+            className="avatar-fallback"
+            style={{ display: avatarUrl ? "none" : "flex" }}
+            aria-hidden={Boolean(avatarUrl)}
+          >
+            {getInitials(displayName)}
+          </div>
         </div>
       </div>
     </header>

@@ -143,6 +143,66 @@
   color: var(--text-secondary);
 }
 
+.photo-input {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.photo-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.photo-upload-trigger {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.photo-upload-trigger:hover,
+.photo-upload-trigger:focus-visible {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.selected-photo-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.photo-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 220px;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+}
+
 .mensagem {
   margin-bottom: 16px;
   border-radius: 8px;

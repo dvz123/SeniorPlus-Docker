@@ -206,6 +206,19 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const updateCurrentUser = (updates = {}) => {
+    if (!updates || typeof updates !== "object") return
+    setCurrentUser((prev) => {
+      const merged = normalizeUser({ ...prev, ...updates })
+      try {
+        localStorage.setItem("currentUser", JSON.stringify(merged))
+      } catch (error) {
+        console.warn("Não foi possível persistir currentUser atualizado:", error)
+      }
+      return merged
+    })
+  }
+
   const value = {
     currentUser,
     user: currentUser,
@@ -215,6 +228,7 @@ export const AuthProvider = ({ children }) => {
     requestPasswordReset,
     confirmPasswordReset,
     logout,
+    updateCurrentUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

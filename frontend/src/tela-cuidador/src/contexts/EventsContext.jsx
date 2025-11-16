@@ -1,9 +1,12 @@
-import { createContext, useState, useContext, useEffect, useMemo } from "react"
+import { createContext, useState, useContext, useEffect, useMemo, useCallback } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { useAuth } from "../../../tela-auth/src/contexts/AuthContext"
 import { useToast } from "../../../contexts/ToastContext"
 
 const EventsContext = createContext()
+
+const LEGACY_STORAGE_KEY = "events"
+const SHARED_STORAGE_KEY = "seniorplus:events"
 
 export const useEvents = () => useContext(EventsContext)
 
@@ -42,39 +45,82 @@ export const EventsProvider = ({ children }) => {
     return base
   }
 
-  const [events, setEvents] = useState(() => {
-    // Verificar se o usuário está autenticado (usa authToken gerenciado pelo AuthContext)
-    const isAuthenticated = localStorage.getItem("authToken") !== null || localStorage.getItem("isLoggedIn") === 'true'
+  const loadInitialEvents = useCallback(() => {
+    if (typeof window === "undefined") return []
 
-    if (!isAuthenticated) {
-      return []
+    const parseStoredValue = (raw) => {
+      if (!raw) return []
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) return parsed
+        if (Array.isArray(parsed?.items)) return parsed.items
+        return []
+      } catch (error) {
+        console.error("Erro ao interpretar eventos armazenados:", error)
+        return []
+      }
     }
 
-    const savedEvents = localStorage.getItem("events")
-    if (!savedEvents) return []
-
-    try {
-      const parsed = JSON.parse(savedEvents)
-      return Array.isArray(parsed) ? parsed.map((evt) => normalizeEvent(evt)).filter(Boolean) : []
-    } catch (error) {
-      console.error("Erro ao carregar eventos do storage:", error)
-      return []
+    const sharedRaw = window.localStorage.getItem(SHARED_STORAGE_KEY)
+    const shared = parseStoredValue(sharedRaw)
+    if (shared.length > 0) {
+      return shared.map((evt) => normalizeEvent(evt)).filter(Boolean)
     }
-  })
+
+    const legacyRaw = window.localStorage.getItem(LEGACY_STORAGE_KEY)
+    const legacy = parseStoredValue(legacyRaw)
+    if (legacy.length > 0) {
+      return legacy.map((evt) => normalizeEvent(evt)).filter(Boolean)
+    }
+
+    return []
+  }, [])
+
+  const [events, setEvents] = useState(() => loadInitialEvents())
 
   // Limpar dados quando o usuário fizer logout
   useEffect(() => {
     if (!currentUser) {
-      setEvents([])
+      setEvents(loadInitialEvents())
     }
-  }, [currentUser])
+  }, [currentUser, loadInitialEvents])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined
+
+    const handleStorage = (event) => {
+      if (event.key !== SHARED_STORAGE_KEY || !event.newValue) return
+      try {
+        const parsed = JSON.parse(event.newValue)
+        const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.items) ? parsed.items : []
+        setEvents(list.map((evt) => normalizeEvent(evt)).filter(Boolean))
+      } catch (error) {
+        console.error("Erro ao sincronizar eventos compartilhados:", error)
+      }
+    }
+
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
 
   // Salvar dados no localStorage quando mudarem
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem("events", JSON.stringify(events))
+    if (typeof window === "undefined") return
+    try {
+      window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(events))
+    } catch (error) {
+      console.warn("Falha ao persistir eventos (legacy)", error)
     }
-  }, [events, currentUser])
+
+    try {
+      window.localStorage.setItem(
+        SHARED_STORAGE_KEY,
+        JSON.stringify({ items: events, updatedAt: new Date().toISOString() }),
+      )
+    } catch (error) {
+      console.warn("Falha ao persistir eventos compartilhados", error)
+    }
+  }, [events])
 
   const addEvent = (title, date, startTime, endTime, location, description, category) => {
     const newEvent = normalizeEvent({

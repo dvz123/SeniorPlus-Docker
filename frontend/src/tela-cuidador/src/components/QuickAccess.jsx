@@ -1,10 +1,52 @@
 import { Link } from "react-router-dom"
 import "../styles/QuickAccess.css"
+import { useCaregiverProfile } from "../contexts/CaregiverProfileContext"
 
 function QuickAccess() {
+  const { caregiverProfile } = useCaregiverProfile()
+
+  const avatarUrl = caregiverProfile?.photoUrl || ""
+  const displayName = caregiverProfile?.displayName || "Configure seu perfil"
+  const headline = caregiverProfile?.headline || "Defina como deseja ser visto pelos idosos"
+
   return (
     <div className="quick-access-section">
       <h2 className="quick-access-title">Acesso rápido</h2>
+      <div className="quick-access-caregiver-card">
+        <div className="caregiver-card-avatar" aria-hidden={!avatarUrl}>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={`Foto de ${displayName}`}
+              onError={(event) => {
+                event.currentTarget.style.display = "none"
+                const fallback = event.currentTarget.parentElement?.querySelector(".caregiver-card-fallback")
+                if (fallback) fallback.style.display = "flex"
+              }}
+            />
+          ) : null}
+          <div
+            className="caregiver-card-fallback"
+            style={{ display: avatarUrl ? "none" : "flex" }}
+          >
+            {displayName
+              .split(" ")
+              .filter(Boolean)
+              .map((part) => part[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase() || "CU"}
+          </div>
+        </div>
+        <div className="caregiver-card-body">
+          <span className="caregiver-card-label">Perfil do cuidador</span>
+          <strong className="caregiver-card-name">{displayName}</strong>
+          <p className="caregiver-card-headline">{headline}</p>
+        </div>
+        <Link to="/configuracoes" className="caregiver-card-action" aria-label="Editar perfil do cuidador">
+          Personalizar perfil
+        </Link>
+      </div>
       <div className="quick-access-grid">
         <Link to="/emergencia" className="quick-access-button emergency-button">
           <svg

@@ -1,0 +1,7 @@
+ALTER TABLE idosos
+    ADD COLUMN genero VARCHAR(20) NULL,
+    ADD COLUMN estado_civil VARCHAR(40) NULL,
+    ADD COLUMN idade INT NULL;
+
+ALTER TABLE idosos
+    MODIFY COLUMN foto_url LONGTEXT NULL;

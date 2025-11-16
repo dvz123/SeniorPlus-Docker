@@ -134,10 +134,17 @@ public class IdosoController {
         }
 
         idoso.setTelefone(request.getTelefone());
+        idoso.setGenero(request.getGenero());
+        idoso.setEstadoCivil(request.getEstadoCivil());
+        idoso.setIdade(request.getIdade());
         idoso.setPeso(request.getPeso());
         idoso.setAltura(request.getAltura());
         idoso.setTipoSanguineo(request.getTipoSanguineo());
         idoso.setObservacao(request.getObservacao());
+        idoso.setAlergias(request.getAlergias());
+        idoso.setFotoUrl(request.getFotoUrl());
+        idoso.setNomeContatoEmergencia(request.getNomeContatoEmergencia());
+        idoso.setContatoEmergencia(request.getContatoEmergencia());
         idoso.setImc(request.getImc());
 
         String cuidadorCpf = normalizarCpf(request.getCuidadorCpf());

@@ -19,7 +19,7 @@ function MedicationHistoryForm({ medicationId, medicationName, onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    recordMedicationTaken(medicationId, formData.taken, formData.notes)
+    recordMedicationTaken(medicationId, formData.taken, { notes: formData.notes })
     onSubmit()
   }
 

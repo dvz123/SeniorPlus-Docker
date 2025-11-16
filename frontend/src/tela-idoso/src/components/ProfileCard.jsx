@@ -32,6 +32,16 @@ function ProfileCard() {
       const nomeBase = currentUser?.name || currentUser?.nome || currentUser?.fullName || currentUser?.username;
       const emailBase = currentUser?.email || fonte.email;
 
+      let storedCaregiverProfile = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem("caregiverProfile");
+          if (raw) storedCaregiverProfile = JSON.parse(raw);
+        } catch (error) {
+          storedCaregiverProfile = null;
+        }
+      }
+
       const listaCuidadores = [];
       const fontesPossiveis = [];
 
@@ -50,8 +60,10 @@ function ProfileCard() {
           listaCuidadores.push({
             nome: c.nome || "Cuidador vinculado",
             cpf: cpfCuidador,
-            email: c.email || null,
-            telefone: c.telefone || null,
+            email: c.email || storedCaregiverProfile?.email || null,
+            telefone: c.telefone || storedCaregiverProfile?.phone || null,
+            fotoUrl: c.fotoUrl || c.foto || c.avatarUrl || storedCaregiverProfile?.photoUrl || null,
+            headline: c.headline || storedCaregiverProfile?.headline || null,
           });
         });
 
@@ -62,15 +74,39 @@ function ProfileCard() {
         return index === self.findIndex((other) => other.cpf === item.cpf);
       });
 
+      if (deduplicados.length === 0 && storedCaregiverProfile?.displayName) {
+        deduplicados.push({
+          nome: storedCaregiverProfile.displayName,
+          cpf: storedCaregiverProfile.cpf || null,
+          email: storedCaregiverProfile.email || null,
+          telefone: storedCaregiverProfile.phone || null,
+          fotoUrl: storedCaregiverProfile.photoUrl || null,
+          headline: storedCaregiverProfile.headline || null,
+        });
+      }
+
+      const idadeBase =
+        fonte.idade ??
+        calcularIdade(fonte.dataNascimento || currentUser?.dataNascimento);
+
+      const alergiasBase = (() => {
+        if (!fonte.alergias && !fonte.observacao) return null;
+        if (Array.isArray(fonte.alergias)) return fonte.alergias;
+        if (typeof fonte.alergias === 'string') return fonte.alergias;
+        if (typeof fonte.observacao === 'string') return fonte.observacao;
+        return null;
+      })();
+
       return {
         nome: fonte.nome || nomeBase || "Usuário",
         cpf: fonte.cpf || currentUser?.cpf || "--",
-        idade: calcularIdade(fonte.dataNascimento || currentUser?.dataNascimento),
+        idade: idadeBase,
         estadoCivil: fonte.estadoCivil || fonte.observacao || currentUser?.estadoCivil || null,
         tipoSanguineo: fonte.tipoSanguineo || currentUser?.tipoSanguineo || "--",
-        alergias: fonte.observacao || fonte.alergia || currentUser?.observacao || null,
+        alergias: alergiasBase,
         telefone: fonte.telefone || currentUser?.telefone || null,
         email: emailBase || null,
+        fotoUrl: fonte.fotoUrl || fonte.foto || currentUser?.fotoUrl || null,
         caregivers: deduplicados,
       };
     },
@@ -129,10 +165,45 @@ function ProfileCard() {
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
   }, []);
 
+  const idadeFormatada = useMemo(() => {
+    if (profile?.idade == null) return "--";
+    const numero = Number(profile.idade);
+    if (!Number.isFinite(numero)) return profile.idade;
+    return `${numero} ${numero === 1 ? 'ano' : 'anos'}`;
+  }, [profile?.idade]);
+
+  const alergiasNormalizadas = useMemo(() => {
+    if (!profile?.alergias) return [];
+    if (Array.isArray(profile.alergias)) {
+      return profile.alergias
+        .map((item) => (typeof item === 'string' ? item.trim() : item))
+        .filter(Boolean);
+    }
+    return String(profile.alergias)
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }, [profile?.alergias]);
+
   return (
     <div className="profile-card">
       <div className="profile-header">
-        <div className="avatar" aria-hidden="true">{avatarInitials}</div>
+        <div className="avatar" aria-hidden={!profile?.fotoUrl}>
+          {profile?.fotoUrl ? (
+            <img
+              src={profile.fotoUrl}
+              alt={`Foto de ${profile?.nome}`}
+              onError={(event) => {
+                event.currentTarget.style.display = 'none';
+                const fallback = event.currentTarget.parentElement?.querySelector('.avatar-fallback');
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div className="avatar-fallback" style={{ display: profile?.fotoUrl ? 'none' : 'flex' }}>
+            {avatarInitials}
+          </div>
+        </div>
         <div className="profile-info">
           <strong>{profile?.nome || "Nome"}</strong>
           <small>CPF: {profile?.cpf || "--"}</small>
@@ -142,7 +213,7 @@ function ProfileCard() {
       <div className="grid">
         <div>
           <div className="label">Idade:</div>
-          <div className="value">{profile?.idade ?? "--"}</div>
+          <div className="value">{idadeFormatada}</div>
 
           <div className="label">Telefone:</div>
           <div className="value">{profile?.telefone || "--"}</div>
@@ -152,9 +223,17 @@ function ProfileCard() {
           <div className="label">Tipo sanguíneo:</div>
           <div className="value">{profile?.tipoSanguineo || "--"}</div>
 
-          <div className="label">Observações:</div>
-          <div className="value">
-            <span className="allergy-tag">{profile?.alergias || "--"}</span>
+          <div className="label">Alergias:</div>
+          <div className="value allergy-list">
+            {alergiasNormalizadas.length > 0 ? (
+              alergiasNormalizadas.map((item, idx) => (
+                <span className="allergy-tag" key={`${item}-${idx}`}>
+                  {item}
+                </span>
+              ))
+            ) : (
+              <span className="no-allergies">--</span>
+            )}
           </div>
         </div>
       </div>
@@ -165,7 +244,37 @@ function ProfileCard() {
           <ul className="caregiver-list">
             {caregivers.map((item, idx) => (
               <li key={item.cpf || idx} className="caregiver-card">
-                <div className="caregiver-name">{item.nome || "Cuidador"}</div>
+                <div className="caregiver-card-header">
+                  <div className="caregiver-avatar" aria-hidden={!item.fotoUrl}>
+                    {item.fotoUrl ? (
+                      <img
+                        src={item.fotoUrl}
+                        alt={`Foto de ${item.nome || 'Cuidador'}`}
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none';
+                          const fallback = event.currentTarget.parentElement?.querySelector('.caregiver-avatar-fallback');
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="caregiver-avatar-fallback"
+                      style={{ display: item.fotoUrl ? 'none' : 'flex' }}
+                    >
+                      {(item.nome || 'CU')
+                        .split(' ')
+                        .filter(Boolean)
+                        .map((part) => part[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="caregiver-name">{item.nome || "Cuidador"}</div>
+                    {item.headline ? <div className="caregiver-headline">{item.headline}</div> : null}
+                  </div>
+                </div>
                 <dl className="caregiver-meta">
                   <div>
                     <dt>CPF</dt>

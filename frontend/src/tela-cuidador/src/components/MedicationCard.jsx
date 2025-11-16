@@ -5,19 +5,24 @@ function MedicationCard() {
   const { getTodayMedications, recordMedicationTaken } = useMedication()
   const todayMedications = getTodayMedications()
 
-  const handleRecordClick = (medicationId) => {
-    recordMedicationTaken(medicationId, true)
+  const handleRecordClick = (medicationId, timeSlot) => {
+    recordMedicationTaken(medicationId, true, { timeSlot })
   }
 
   // Group medications by time
   const medicationsByTime = todayMedications.reduce((acc, medication) => {
-    const times = medication.time.split(",")
-    times.forEach((time) => {
-      const trimmedTime = time.trim()
-      if (!acc[trimmedTime]) {
-        acc[trimmedTime] = []
+    const timeSlots = Array.isArray(medication.times)
+      ? medication.times
+      : String(medication.time || "")
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+
+    timeSlots.forEach((time) => {
+      if (!acc[time]) {
+        acc[time] = []
       }
-      acc[trimmedTime].push(medication)
+      acc[time].push(medication)
     })
     return acc
   }, {})
@@ -71,7 +76,7 @@ function MedicationCard() {
                       </div>
                       <button
                         className="record-medication-btn"
-                        onClick={() => handleRecordClick(medication.id)}
+                        onClick={() => handleRecordClick(medication.id, time)}
                         title="Registrar medicamento"
                       >
                         <svg

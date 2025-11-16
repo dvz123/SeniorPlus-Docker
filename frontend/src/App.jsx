@@ -11,6 +11,7 @@ import {
 
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
+import { CaregiverProfileProvider } from "./tela-cuidador/src/contexts/CaregiverProfileContext";
 import { UserProvider } from "./tela-cuidador/src/contexts/UserContext";
 import { MedicationProvider } from "./tela-cuidador/src/contexts/MedicationContext";
 import { EventsProvider } from "./tela-cuidador/src/contexts/EventsContext";
@@ -70,7 +71,8 @@ function AppContent() {
 
   return (
     <AuthProvider>
-      <UserProvider>
+      <CaregiverProfileProvider>
+        <UserProvider>
         <EventsProvider>
           <MedicationProvider>
             <NotificationProvider>
@@ -176,6 +178,7 @@ function AppContent() {
           </MedicationProvider>
         </EventsProvider>
       </UserProvider>
+    </CaregiverProfileProvider>
     </AuthProvider>
   );
 }

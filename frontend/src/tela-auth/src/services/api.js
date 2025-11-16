@@ -156,25 +156,95 @@ const shouldAttachAuthHeader = (endpoint = "") => {
 // API methods
 export const api = {
   // Endpoints para Eventos
-  getEventosDeHoje: async (idosoId) => {
-    return api.get(`/eventos/hoje?idosoId=${idosoId}`);
+  listEventos: async (idosoCpf) => {
+    return api.get(`/api/v1/idosos/${idosoCpf}/eventos`);
+  },
+  listEventosDeHoje: async (idosoCpf) => {
+    return api.get(`/api/v1/idosos/${idosoCpf}/eventos/hoje`);
+  },
+  createEvento: async (idosoCpf, payload) => {
+    return api.post(`/api/v1/idosos/${idosoCpf}/eventos`, payload);
+  },
+  updateEvento: async (eventoId, payload) => {
+    return api.put(`/api/v1/eventos/${eventoId}`, payload);
+  },
+  deleteEvento: async (eventoId) => {
+    return api.delete(`/api/v1/eventos/${eventoId}`);
   },
   atualizarStatusEvento: async (eventoId, status) => {
-    return api.put(`/eventos/${eventoId}/status`, { status });
+    return api.patch(`/api/v1/eventos/${eventoId}/status`, { status });
   },
 
   // Endpoints para Medicamentos
-  getMedicamentosDeHoje: async (idosoId) => {
-    return api.get(`/medicamentos/hoje?idosoId=${idosoId}`);
+  listMedicamentos: async (idosoCpf) => {
+    return api.get(`/api/v1/idosos/${idosoCpf}/medicamentos`);
+  },
+  createMedicamento: async (idosoCpf, payload) => {
+    return api.post(`/api/v1/idosos/${idosoCpf}/medicamentos`, payload);
+  },
+  updateMedicamento: async (medicamentoId, payload) => {
+    return api.put(`/api/v1/medicamentos/${medicamentoId}`, payload);
+  },
+  deleteMedicamento: async (medicamentoId) => {
+    return api.delete(`/api/v1/medicamentos/${medicamentoId}`);
+  },
+
+  // Endpoints para Contatos de Emergência
+  listEmergencyContacts: async (idosoCpf) => {
+    return api.get(`/api/v1/idosos/${idosoCpf}/contatos-emergencia`);
+  },
+  createEmergencyContact: async (idosoCpf, payload) => {
+    return api.post(`/api/v1/idosos/${idosoCpf}/contatos-emergencia`, payload);
+  },
+  updateEmergencyContact: async (idosoCpf, contatoId, payload) => {
+    return api.put(`/api/v1/idosos/${idosoCpf}/contatos-emergencia/${contatoId}`, payload);
+  },
+  deleteEmergencyContact: async (idosoCpf, contatoId) => {
+    return api.delete(`/api/v1/idosos/${idosoCpf}/contatos-emergencia/${contatoId}`);
   },
 
   // Endpoints para Mensagens
-  getMensagensDoIdoso: async (idosoId) => {
-    // backend expõe /api/mensagens
-    return api.get(`/api/mensagens?idosoId=${idosoId}`);
+  getMensagensDoIdoso: async (identifier) => {
+    if (!identifier) {
+      return []
+    }
+
+    const target = typeof identifier === "object" ? identifier : { cpf: identifier }
+    const params = new URLSearchParams()
+    if (target?.cpf) {
+      const normalizedCpf = String(target.cpf).replace(/\D/g, "")
+      if (normalizedCpf) {
+        params.append("idosoCpf", normalizedCpf)
+      }
+    }
+    if (!params.has("idosoCpf") && target?.id) {
+      params.append("idosoId", target.id)
+    }
+
+    const query = params.toString()
+    const endpoint = query ? `/api/v1/mensagens?${query}` : "/api/v1/mensagens"
+    return api.get(endpoint)
   },
-  enviarMensagem: async (mensagem) => {
-    return api.post('/api/mensagens', mensagem);
+  enviarMensagem: async (identifier, mensagem) => {
+    if (!identifier) {
+      throw new Error("Identificador do idoso é obrigatório para enviar mensagens")
+    }
+
+    const target = typeof identifier === "object" ? identifier : { cpf: identifier }
+    const payload = { ...mensagem }
+
+    if (target?.cpf) {
+      const normalizedCpf = String(target.cpf).replace(/\D/g, "")
+      if (normalizedCpf) {
+        payload.idosoCpf = normalizedCpf
+      }
+    }
+
+    if (target?.id) {
+      payload.idosoId = target.id
+    }
+
+    return api.post('/api/v1/mensagens', payload)
   },
 
   // Função para fazer requisições GET

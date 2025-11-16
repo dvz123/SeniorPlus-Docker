@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import "../styles/AtualizarDados.css"
 import BackButton from "../../../components/BackButton"
 import { api } from "../../../tela-auth/src/services/api"
 import { useAuth } from "../../../tela-auth/src/contexts/AuthContext"
 import { useToast } from "../../../contexts/ToastContext"
+import { useUser } from "../contexts/UserContext"
 
 const emptyForm = {
   cpf: "",
@@ -12,11 +13,18 @@ const emptyForm = {
   email: "",
   dataNascimento: "",
   telefone: "",
+  idade: "",
+  genero: "",
+  estadoCivil: "",
   peso: "",
   altura: "",
   tipoSanguineo: "",
   observacao: "",
   imc: "",
+  alergias: "",
+  fotoUrl: "",
+  nomeContatoEmergencia: "",
+  contatoEmergencia: "",
 }
 
 const calcularImc = (peso, alturaEmCm) => {
@@ -58,19 +66,108 @@ const mapApiToForm = (idoso) => {
     email: idoso?.email || "",
     dataNascimento: idoso?.dataNascimento ? String(idoso.dataNascimento).substring(0, 10) : "",
     telefone: idoso?.telefone || "",
+    idade: idoso?.idade != null ? String(idoso.idade) : "",
+    genero: idoso?.genero || "",
+    estadoCivil: idoso?.estadoCivil || "",
     peso: peso !== "" ? String(peso) : "",
     altura: alturaCm !== "" ? String(alturaCm) : "",
     tipoSanguineo: idoso?.tipoSanguineo || "",
     observacao: idoso?.observacao || "",
+    alergias: idoso?.alergias || "",
+    fotoUrl: idoso?.fotoUrl || "",
     imc: calcularImc(peso, alturaCm) || idoso?.imc || "",
+    nomeContatoEmergencia: idoso?.nomeContatoEmergencia || "",
+    contatoEmergencia: idoso?.contatoEmergencia || "",
   }
 }
 
 const normalizeCpf = (value) => (value || "").replace(/\D/g, "")
 
+const parseAllergiesList = (value) => {
+  if (!value) return []
+  if (Array.isArray(value)) return value.filter(Boolean).map((item) => item.trim())
+  return String(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+const calculateAgeFromDate = (dateValue) => {
+  if (!dateValue) return null
+  const birthDate = new Date(dateValue)
+  if (Number.isNaN(birthDate.getTime())) return null
+  const today = new Date()
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const hasHadBirthday =
+    today.getMonth() > birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate())
+  if (!hasHadBirthday) {
+    age -= 1
+  }
+  return Number.isFinite(age) && age >= 0 ? age : null
+}
+
+const mapApiToElderlyData = (idoso) => {
+  if (!idoso) return null
+
+  const alturaMetros = idoso?.altura != null ? Number(idoso.altura) : null
+  const ageFromField = idoso?.idade != null ? Number(idoso.idade) : null
+  const computedAge = calculateAgeFromDate(idoso?.dataNascimento)
+
+  return {
+    id: idoso?.cpf || idoso?.id || "",
+    cpf: idoso?.cpf || "",
+    name: idoso?.nome || "",
+    email: idoso?.email || "",
+    phone: idoso?.telefone || "",
+    photoUrl: idoso?.fotoUrl || "",
+    bloodType: idoso?.tipoSanguineo || "",
+    maritalStatus: idoso?.estadoCivil || "",
+    gender: idoso?.genero || "",
+    weight: idoso?.peso != null ? Number(idoso.peso) : null,
+    height: alturaMetros,
+    birthDate: idoso?.dataNascimento || "",
+    observation: idoso?.observacao || "",
+    imc: idoso?.imc || "",
+    age: Number.isFinite(ageFromField) && ageFromField > 0 ? ageFromField : computedAge,
+    allergies: parseAllergiesList(idoso?.alergias),
+    emergencyContact: idoso?.contatoEmergencia || "",
+    emergencyContactName: idoso?.nomeContatoEmergencia || "",
+    address: idoso?.endereco || "",
+    medicalConditions: Array.isArray(idoso?.condicoesMedicas) ? idoso.condicoesMedicas : [],
+  }
+}
+
+const mapFormToElderlyData = (form) => {
+  if (!form) return null
+  const alturaMetros = form.altura ? Number(form.altura) / 100 : null
+  const idade = form.idade != null && form.idade !== "" ? Number(form.idade) : null
+  return {
+    id: form.cpf || form.id || "",
+    cpf: form.cpf || "",
+    name: form.nome || "",
+    email: form.email || "",
+    phone: form.telefone || "",
+    photoUrl: form.fotoUrl || "",
+    bloodType: form.tipoSanguineo || "",
+    maritalStatus: form.estadoCivil || "",
+    gender: form.genero || "",
+    weight: form.peso ? Number(form.peso) : null,
+    height: Number.isFinite(alturaMetros) ? alturaMetros : null,
+    birthDate: form.dataNascimento || "",
+    observation: form.observacao || "",
+    imc: form.imc || "",
+    age: Number.isFinite(idade) && idade > 0 ? idade : calculateAgeFromDate(form.dataNascimento),
+    allergies: parseAllergiesList(form.alergias),
+    emergencyContact: form.contatoEmergencia || "",
+    emergencyContactName: form.nomeContatoEmergencia || "",
+  }
+}
+
 function AtualizarDados() {
   const { currentUser } = useAuth()
   const { showError, showSuccess } = useToast()
+  const { updateElderlyData } = useUser() || {}
 
   const [formData, setFormData] = useState(emptyForm)
   const [linkedIdosos, setLinkedIdosos] = useState([])
@@ -80,6 +177,8 @@ function AtualizarDados() {
   const [salvando, setSalvando] = useState(false)
   const [processandoVinculo, setProcessandoVinculo] = useState(false)
   const [cpfParaVincular, setCpfParaVincular] = useState("")
+  const fileInputRef = useRef(null)
+  const [photoFileName, setPhotoFileName] = useState("")
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -99,6 +198,69 @@ function AtualizarDados() {
 
       return atualizado
     })
+
+    if (name === "fotoUrl") {
+      setPhotoFileName("")
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  const openPhotoPicker = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handlePhotoUpload = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp"]
+    if (!allowedTypes.includes(file.type)) {
+      if (showError) {
+        showError("Formato de imagem inválido. Utilize PNG, JPG ou WEBP.")
+      }
+      event.target.value = ""
+      setPhotoFileName("")
+      return
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      showError?.("A imagem deve ter no máximo 2 MB.")
+      event.target.value = ""
+      setPhotoFileName("")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : ""
+      setFormData((prev) => ({
+        ...prev,
+        fotoUrl: result,
+      }))
+      setPhotoFileName(file.name)
+    }
+    reader.onerror = () => {
+      console.error(reader.error)
+      showError?.("Não foi possível carregar a imagem selecionada.")
+      setPhotoFileName("")
+    }
+
+    reader.readAsDataURL(file)
+  }
+
+  const handlePhotoRemoval = () => {
+    setFormData((prev) => ({
+      ...prev,
+      fotoUrl: "",
+    }))
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+    setPhotoFileName("")
   }
 
   const resetMensagem = useCallback(() => setMensagem(null), [])
@@ -112,6 +274,9 @@ function AtualizarDados() {
       try {
         const data = await api.get(`/api/v1/idoso/${cpf}`)
         setFormData(mapApiToForm(data))
+        if (updateElderlyData) {
+          updateElderlyData(mapApiToElderlyData(data))
+        }
       } catch (error) {
         console.error(error)
         const mensagemErro = error?.message || "Não foi possível carregar os dados do idoso selecionado."
@@ -199,6 +364,13 @@ function AtualizarDados() {
       altura: alturaMetrosAjustada,
       imc: calcularImc(formData.peso, formData.altura) || formData.imc || null,
       dataNascimento: formData.dataNascimento || null,
+      idade: formData.idade ? Number.parseInt(formData.idade, 10) : null,
+      genero: formData.genero?.trim() || null,
+      estadoCivil: formData.estadoCivil?.trim() || null,
+      alergias: formData.alergias ? String(formData.alergias) : null,
+      fotoUrl: formData.fotoUrl || null,
+      nomeContatoEmergencia: formData.nomeContatoEmergencia?.trim() || null,
+      contatoEmergencia: formData.contatoEmergencia?.trim() || null,
     }
 
     const jaVinculado = linkedIdosos.some((idoso) => idoso.cpf === cpfNormalizado)
@@ -222,6 +394,16 @@ function AtualizarDados() {
         }
       }
 
+      if (updateElderlyData) {
+        updateElderlyData(
+          mapFormToElderlyData({
+            ...formData,
+            cpf: cpfNormalizado,
+            fotoUrl: payload.fotoUrl || formData.fotoUrl,
+          }),
+        )
+      }
+
       await carregarVinculos(cpfNormalizado)
     } catch (error) {
       console.error(error)
@@ -238,8 +420,8 @@ function AtualizarDados() {
   const handleSelectChange = async (event) => {
     const novoCpf = event.target.value
     setSelectedCpf(novoCpf)
-  resetMensagem()
-  await carregarIdoso(novoCpf)
+    resetMensagem()
+    await carregarIdoso(novoCpf)
   }
 
   const handleNovoCadastro = () => {
@@ -470,6 +652,63 @@ function AtualizarDados() {
               />
             </div>
             <div className="form-group">
+              <label htmlFor="idade">Idade</label>
+              <input
+                id="idade"
+                type="number"
+                name="idade"
+                min="0"
+                max="130"
+                value={formData.idade}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="genero">Gênero</label>
+              <select id="genero" name="genero" value={formData.genero} onChange={handleChange}>
+                <option value="">Selecione</option>
+                <option value="Feminino">Feminino</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Não-binário">Não-binário</option>
+                <option value="Prefere não informar">Prefere não informar</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="estadoCivil">Estado civil</label>
+              <select id="estadoCivil" name="estadoCivil" value={formData.estadoCivil} onChange={handleChange}>
+                <option value="">Selecione</option>
+                <option value="Solteiro(a)">Solteiro(a)</option>
+                <option value="Casado(a)">Casado(a)</option>
+                <option value="Divorciado(a)">Divorciado(a)</option>
+                <option value="Viúvo(a)">Viúvo(a)</option>
+                <option value="União estável">União estável</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="nomeContatoEmergencia">Nome do contato de emergência</label>
+              <input
+                id="nomeContatoEmergencia"
+                type="text"
+                name="nomeContatoEmergencia"
+                placeholder="Quem deve ser avisado em emergências"
+                value={formData.nomeContatoEmergencia}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="contatoEmergencia">Telefone do contato de emergência</label>
+              <input
+                id="contatoEmergencia"
+                type="text"
+                name="contatoEmergencia"
+                placeholder="Ex: (11) 99999-9999"
+                value={formData.contatoEmergencia}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group">
               <label htmlFor="peso">Peso (kg)</label>
               <input
                 id="peso"
@@ -522,6 +761,55 @@ function AtualizarDados() {
                 value={formData.observacao}
                 onChange={handleChange}
               />
+            </div>
+            <div className="form-group full-width">
+              <label htmlFor="alergias">Alergias</label>
+              <textarea
+                id="alergias"
+                name="alergias"
+                rows="3"
+                placeholder="Informe alergias separadas por vírgula"
+                value={formData.alergias}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group full-width">
+              <label htmlFor="fotoIdoso">Foto do idoso</label>
+              <div className="photo-input">
+                {formData.fotoUrl ? (
+                  <div className="photo-preview">
+                    <img src={formData.fotoUrl} alt="Pré-visualização do idoso" onError={handlePhotoRemoval} />
+                    <button type="button" className="outline-button" onClick={handlePhotoRemoval}>
+                      Remover foto
+                    </button>
+                  </div>
+                ) : null}
+
+                <button
+                  type="button"
+                  className="outline-button photo-upload-trigger"
+                  onClick={openPhotoPicker}
+                >
+                  {photoFileName ? "Trocar imagem" : "Selecionar imagem"}
+                </button>
+                {photoFileName && <span className="selected-photo-name">{photoFileName}</span>}
+                <input
+                  id="fotoIdoso"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handlePhotoUpload}
+                  className="photo-file-input"
+                />
+                <input
+                  type="text"
+                  name="fotoUrl"
+                  placeholder="Ou informe uma URL pública"
+                  value={formData.fotoUrl}
+                  onChange={handleChange}
+                />
+                <p className="helper-text">Aceita imagens até 2 MB nos formatos PNG, JPG ou WEBP.</p>
+              </div>
             </div>
           </div>
 

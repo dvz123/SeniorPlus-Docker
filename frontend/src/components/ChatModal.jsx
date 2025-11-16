@@ -20,40 +20,134 @@ function ChatModal() {
 
     const [loadingMessages, setLoadingMessages] = useState(false)
 
+    const normalizeActor = (value) => (value || "").toString().trim().toLowerCase()
+    const normalizeIdentifier = (value) => (value || "").toString().replace(/\D/g, "")
+
+    const isCurrentUser = (value) => {
+        if (!value) return false
+        const normalized = normalizeActor(value)
+        return [currentUser?.name, currentUser?.email, currentUser?.username]
+            .filter(Boolean)
+            .some((candidate) => normalizeActor(candidate) === normalized)
+    }
+
+    const isCurrentElderly = (value) => {
+        if (!value) return false
+        const normalized = normalizeActor(value)
+        return [elderlyData?.name, elderlyData?.email, elderlyData?.displayName]
+            .filter(Boolean)
+            .some((candidate) => normalizeActor(candidate) === normalized)
+    }
+
+    const resolveSenderRole = (rawSender, rawRecipient) => {
+        const normalizedSender = normalizeActor(rawSender)
+        const normalizedRecipient = normalizeActor(rawRecipient)
+
+        if (["caregiver", "cuidador", "cuidadora"].includes(normalizedSender)) {
+            return "caregiver"
+        }
+        if (["elderly", "idoso", "idosa"].includes(normalizedSender)) {
+            return "elderly"
+        }
+        if (isCurrentUser(rawSender)) {
+            return currentUser?.role || (isCareGiver() ? "caregiver" : "elderly")
+        }
+        if (isCurrentElderly(rawSender)) {
+            return "elderly"
+        }
+        if (isCurrentUser(rawRecipient)) {
+            return isCareGiver() ? "elderly" : "caregiver"
+        }
+        if (isCurrentElderly(rawRecipient)) {
+            return "caregiver"
+        }
+        return isCareGiver() ? "elderly" : "caregiver"
+    }
+
     // Carregar mensagens do idoso selecionado quando o modal abrir
     useEffect(() => {
         const loadMessages = async () => {
             if (!isOpen) return
-            if (!elderlyData?.id) {
+            const activeIdentifier = {
+                cpf: elderlyData?.cpf || null,
+                id: elderlyData?.id || null,
+            }
+
+            if (!activeIdentifier.cpf && !activeIdentifier.id) {
                 setMessages([])
                 return
             }
 
+            const activeCpf = normalizeIdentifier(activeIdentifier.cpf)
+            const activeId = activeIdentifier.id ? String(activeIdentifier.id) : null
+
             setLoadingMessages(true)
             try {
-                const resp = await api.getMensagensDoIdoso(elderlyData.id)
+                const resp = await api.getMensagensDoIdoso(activeIdentifier)
                 // Espera-se que resp seja um array de mensagens; se não, tenta adaptar
                 const fetched = Array.isArray(resp) ? resp : resp.messages || []
 
-                // Mapeia mensagens do backend para formato padronizado da UI
-                const mapped = fetched.map((m) => {
-                    const senderRole = (m.remetente === 'caregiver' || m.remetente === 'elderly')
-                        ? m.remetente
-                        : (currentUser && (m.remetente === currentUser.name || m.remetente === currentUser.email))
-                            ? currentUser.role
-                            : (isCareGiver() ? 'elderly' : 'caregiver')
+                const mapped = fetched
+                    .map((m) => {
+                        const associatedCpfRaw = m.idosoCpf || m.idoso_id || (m.idoso && (m.idoso.cpf || m.idoso.id))
+                        const associatedCpf = normalizeIdentifier(associatedCpfRaw)
+                        const fromCpfRaw = m.remetenteCpf || m.fromCpf || null
+                        const toCpfRaw = m.destinatarioCpf || m.toCpf || null
+                        const fromCpf = normalizeIdentifier(fromCpfRaw) || fromCpfRaw
+                        const toCpf = normalizeIdentifier(toCpfRaw) || toCpfRaw
+                        const messageIdosoCpf = associatedCpf || associatedCpfRaw || null
+                        const senderRole = resolveSenderRole(m.remetente, m.destinatario)
+                        const timestamp = m.dataHora || m.timestamp || new Date().toISOString()
+                        return {
+                            id: m.id ?? `srv_${Date.now()}_${Math.random()}`,
+                            fromId: m.fromId || null,
+                            toId: m.toId || null,
+                            fromCpf,
+                            toCpf,
+                            idosoCpf: messageIdosoCpf,
+                            senderRole,
+                            message: m.conteudo || m.message || m.text || '',
+                            timestamp,
+                            read: m.lida || m.read || false,
+                            __normalizedCpf: associatedCpf,
+                            __fromCpfNormalized: normalizeIdentifier(fromCpfRaw),
+                            __toCpfNormalized: normalizeIdentifier(toCpfRaw),
+                        }
+                    })
+                    .filter((msg) => {
+                        if (!activeCpf && !activeId) return true
+                        const candidateCpfs = [msg.__normalizedCpf, msg.__fromCpfNormalized, msg.__toCpfNormalized]
+                            .filter(Boolean)
+                        if (activeCpf && candidateCpfs.includes(activeCpf)) {
+                            return true
+                        }
+                        if (activeId && (String(msg.toId) === activeId || String(msg.fromId) === activeId)) {
+                            return true
+                        }
+                        return !activeCpf && candidateCpfs.length === 0
+                    })
 
-                    return {
-                        id: m.id || Date.now() + Math.random(),
-                        fromId: m.fromId || null,
-                        toId: m.toId || null,
-                        senderRole: senderRole,
-                        message: m.conteudo || m.message || m.text || '',
-                        timestamp: m.dataHora || m.timestamp || new Date().toISOString(),
-                        read: m.lida || m.read || false,
-                    }
+                setMessages((prev) => {
+                    const byId = new Map()
+                    mapped.forEach((msg) => {
+                        byId.set(String(msg.id), msg)
+                    })
+
+                    prev.forEach((existing) => {
+                        const key = String(existing.id ?? '')
+                        if (byId.has(key)) {
+                            return
+                        }
+                        if (key.startsWith('tmp_')) {
+                            byId.set(key, existing)
+                        }
+                    })
+
+                    const merged = Array.from(byId.values()).sort(
+                        (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+                    )
+                    return merged.map(({ __normalizedCpf, __fromCpfNormalized, __toCpfNormalized, ...rest }) => rest)
                 })
-                setMessages(mapped)
             } catch (error) {
                 console.error('Erro ao carregar mensagens:', error)
                 setMessages([])
@@ -81,13 +175,49 @@ function ChatModal() {
         function onRemoteMessage(e) {
             const msg = e.detail
             if (!msg || !msg.id) return
-            // Se a mensagem pertence ao idoso atual, adiciona
-            if (msg.fromId === elderlyData?.id || msg.toId === elderlyData?.id || msg.toId === currentUser?.id) {
-                setMessages((prev) => {
-                    if (prev.some((m) => m.id === msg.id)) return prev
-                    return [...prev, msg]
-                })
+
+            const activeCpf = normalizeIdentifier(elderlyData?.cpf)
+            const activeId = elderlyData?.id ? String(elderlyData.id) : null
+            const caregiverCpf = normalizeIdentifier(currentUser?.cpf)
+            const caregiverId = currentUser?.id ? String(currentUser.id) : null
+
+            const belongsToActiveChat = () => {
+                const msgCpfCandidates = [msg.idosoCpf, msg.toCpf, msg.fromCpf].map(normalizeIdentifier).filter(Boolean)
+                const msgIdCandidates = [msg.toId, msg.fromId].filter(Boolean).map((value) => String(value))
+
+                if (activeCpf && msgCpfCandidates.length > 0) {
+                    if (msgCpfCandidates.includes(activeCpf)) return true
+                    return false
+                }
+
+                if (activeId && msgIdCandidates.length > 0) {
+                    if (msgIdCandidates.includes(activeId)) return true
+                    return false
+                }
+
+                return !activeCpf && !activeId
             }
+
+            const addressesCurrentCaregiver = () => {
+                if (!caregiverCpf && !caregiverId) return true
+                const candidateCpfs = [msg.toCpf, msg.fromCpf].map(normalizeIdentifier).filter(Boolean)
+                if (caregiverCpf && candidateCpfs.length && !candidateCpfs.includes(caregiverCpf)) return false
+                if (caregiverId && msg.toId && msg.fromId) {
+                    const idMatch = String(msg.toId) === caregiverId || String(msg.fromId) === caregiverId
+                    if (!idMatch) return false
+                }
+                return true
+            }
+
+            if (!belongsToActiveChat() || !addressesCurrentCaregiver()) {
+                return
+            }
+
+            setMessages((prev) => {
+                if (prev.some((m) => m.id === msg.id)) return prev
+                const next = [...prev, msg].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                return next
+            })
         }
 
         window.addEventListener('message:received', onRemoteMessage)
@@ -104,21 +234,35 @@ function ChatModal() {
 
     const handleSendMessage = (e) => {
         e.preventDefault()
-        if (!newMessage.trim()) return
+        const targetIdentifier = {
+            cpf: elderlyData?.cpf || null,
+            id: elderlyData?.id || null,
+        }
+        if (!newMessage.trim() || (!targetIdentifier.cpf && !targetIdentifier.id)) return
+
+        const caregiverCpf = normalizeIdentifier(currentUser?.cpf)
+        const fallbackCaregiverId = currentUser?.id ? String(currentUser.id) : null
+        const activeCpf = normalizeIdentifier(targetIdentifier.cpf)
+        const activeId = targetIdentifier.id ? String(targetIdentifier.id) : null
         // Monta payload conforme entidade Mensagem do backend
         const payload = {
             conteudo: newMessage.trim(),
             remetente: currentUser?.name || currentUser?.email || 'Desconhecido',
             destinatario: elderlyData?.name || ('Idoso ' + (elderlyData?.id || '')),
-            idoso: { id: elderlyData?.id }
+        }
+        if (elderlyData?.id) {
+            payload.idoso = { id: elderlyData.id }
         }
 
         // Otimista: adiciona à UI imediatamente no formato padronizado
         const optimistic = {
-            id: Date.now(),
+            id: `tmp_${Date.now()}`,
             fromId: currentUser?.id || null,
             toId: elderlyData?.id || null,
-            senderRole: currentUser?.role || (isCareGiver() ? 'caregiver' : 'elderly'),
+            fromCpf: caregiverCpf || fallbackCaregiverId,
+            toCpf: activeCpf || activeId,
+            idosoCpf: activeCpf || activeId,
+            senderRole: resolveSenderRole(payload.remetente, payload.destinatario),
             message: payload.conteudo,
             timestamp: new Date().toISOString(),
             read: false,
@@ -129,14 +273,17 @@ function ChatModal() {
         // Envia para o backend
         (async () => {
             try {
-                const resp = await api.enviarMensagem(payload)
+            const resp = await api.enviarMensagem(targetIdentifier, payload)
                 // Backend retorna objeto Mensagem (com id e dataHora)
                 if (resp && resp.id) {
                     const mapped = {
-                        id: resp.id,
+                        id: resp.id ?? optimistic.id,
                         fromId: resp.fromId || null,
                         toId: resp.toId || null,
-                        senderRole: (resp.remetente === 'caregiver' || resp.remetente === 'elderly') ? resp.remetente : (currentUser?.role || (isCareGiver() ? 'caregiver' : 'elderly')),
+                        fromCpf: resp.fromCpf || caregiverCpf || fallbackCaregiverId,
+                        toCpf: resp.toCpf || activeCpf || activeId,
+                        idosoCpf: resp.idosoCpf || activeCpf || activeId,
+                        senderRole: resolveSenderRole(resp.remetente, resp.destinatario),
                         message: resp.conteudo || payload.conteudo,
                         timestamp: resp.dataHora || new Date().toISOString(),
                         read: resp.lida || false,

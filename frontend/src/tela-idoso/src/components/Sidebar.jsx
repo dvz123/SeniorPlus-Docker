@@ -1,10 +1,19 @@
 import React from 'react'
 import { useAuth } from '../../../tela-auth/src/contexts/AuthContext'
+import { useUser } from '../../../tela-cuidador/src/contexts/UserContext'
+import { useResidentIdentity } from '../hooks/useResidentIdentity'
 import '../styles/Sidebar.css'
 
-export default function Sidebar({ toggleSidebar, isOpen, variant = 'drawer' }) {
-  const { logout } = useAuth()
+export default function Sidebar({ toggleSidebar, isOpen, variant = 'drawer', residentName, residentAvatar, residentInitials }) {
+  const { logout, currentUser } = useAuth()
+  const userContext = useUser()
+  const elderlyData = userContext?.elderlyData
+  const identity = useResidentIdentity({ currentUser, fallbackProfile: elderlyData })
+  const displayName = residentName || identity.name
+  const displayAvatar = residentAvatar || identity.avatarUrl
+  const displayInitials = residentInitials || identity.initials
   const isDrawer = variant === 'drawer'
+  const identityLabel = currentUser?.role === 'elderly' ? 'Seu perfil' : 'Idoso assistido'
 
   const handleLogout = async () => {
     try {
@@ -53,6 +62,32 @@ export default function Sidebar({ toggleSidebar, isOpen, variant = 'drawer' }) {
       ) : (
         <div className="sidebar-header">Menu</div>
       )}
+      <div className={`sidebar-profile${isDrawer ? ' sidebar-profile--compact' : ''}`} aria-label="Perfil do idoso">
+        <div className="sidebar-profile__avatar" aria-hidden={!displayAvatar}>
+          {displayAvatar ? (
+            <img
+              src={displayAvatar}
+              alt={`Foto de ${displayName}`}
+              onError={(event) => {
+                event.currentTarget.style.display = 'none'
+                const fallback = event.currentTarget.parentElement?.querySelector('.sidebar-profile__initials')
+                if (fallback) fallback.style.display = 'flex'
+              }}
+            />
+          ) : null}
+          <span
+            className="sidebar-profile__initials"
+            style={{ display: displayAvatar ? 'none' : 'flex' }}
+            aria-hidden={Boolean(displayAvatar)}
+          >
+            {displayInitials || 'ID'}
+          </span>
+        </div>
+        <div className="sidebar-profile__info">
+          <span className="sidebar-profile__eyebrow">{identityLabel}</span>
+          <strong>{displayName}</strong>
+        </div>
+      </div>
       <nav className="sidebar-nav">
         <a href="#idoso-root" className="nav-link" onClick={scrollTo('idoso-root')}>
           Início

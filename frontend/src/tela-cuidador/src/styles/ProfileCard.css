@@ -141,3 +141,50 @@
   background-color: #7f1d1d; /* vermelho escuro */
   color: #fecaca; /* vermelho claro */
 }
+.profile-id-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.profile-id-toggle {
+  border: none;
+  background: rgba(148, 163, 184, 0.14);
+  color: #1e293b;
+  border-radius: 999px;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.profile-id-toggle:hover,
+.profile-id-toggle:focus-visible {
+  background: rgba(10, 161, 116, 0.16);
+  color: #0aa174;
+  outline: none;
+}
+
+.profile-id-toggle svg {
+  display: block;
+}
+
+.dark-mode .profile-id-toggle {
+  background: rgba(100, 116, 139, 0.35);
+  color: #e2e8f0;
+}
+
+.dark-mode .profile-id-toggle:hover,
+.dark-mode .profile-id-toggle:focus-visible {
+  background: rgba(16, 185, 129, 0.28);
+  color: #bbf7d0;
+}
+
+@media (max-width: 640px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}

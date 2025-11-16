@@ -193,7 +193,7 @@
   background: rgba(10, 161, 116, 0.15);
   color: #0aa174;
   border-radius: 999px;
-  padding: 10px 18px;
+  padding: 6px 10px;
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -202,6 +202,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.idoso-header__avatar img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
 }
 
 .idoso-header__avatar:hover,
@@ -218,6 +228,15 @@
 
 .idoso-header__initials {
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(10, 161, 116, 0.2);
+  color: #0f172a;
+  font-weight: 700;
 }
 
 .idoso-header__brand {
@@ -227,6 +246,18 @@
   gap: 4px;
   text-align: center;
   justify-self: center;
+}
+
+.idoso-header__eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(15, 118, 110, 0.75);
+  font-weight: 600;
+}
+
+.dark-mode .idoso-header__eyebrow {
+  color: rgba(134, 239, 172, 0.9);
 }
 
 .idoso-header__logo { margin-bottom: 2px; }
