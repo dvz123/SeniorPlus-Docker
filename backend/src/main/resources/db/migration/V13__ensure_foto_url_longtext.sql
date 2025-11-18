@@ -1,0 +1,2 @@
+ALTER TABLE idosos
+    MODIFY COLUMN foto_url LONGTEXT NULL;

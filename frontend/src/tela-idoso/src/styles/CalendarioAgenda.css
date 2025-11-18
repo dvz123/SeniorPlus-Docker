@@ -39,6 +39,37 @@
   align-items: center;
 }
 
+.topo-esquerda,
+.topo-direita {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-mes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--borderchat);
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn-mes:hover {
+  background: var(--chatmybg);
+  transform: translateY(-1px);
+}
+
+.btn-mes:focus-visible {
+  outline: 3px solid #1e90ff;
+  outline-offset: 2px;
+}
+
 .calendario-topo button {
   background: none;
   border: none;
@@ -375,4 +406,133 @@ label.custom-checkbox {
 
 .eventos-scroll::-webkit-scrollbar-thumb:hover {
   background-color: #0aa174;
+}
+
+@media (max-width: 1024px) {
+  .calendario-container {
+    padding: 18px;
+    font-size: 1rem;
+  }
+
+  .calendario-topo {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .topo-direita {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .calendario-grid {
+    gap: 8px;
+    font-size: 1.05rem;
+  }
+
+  .mini-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .calendario-container {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .cabecalho-calendario {
+    font-size: 1.1rem;
+  }
+
+  .cabecalho-calendario svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .calendario-topo {
+    align-items: flex-start;
+  }
+
+  .calendario-topo h3 {
+    font-size: 1.15rem;
+  }
+
+  .topo-direita {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .btn-hoje {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+  }
+
+  .mini-painel {
+    padding: 10px 14px;
+  }
+
+  .mini-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .eventos-lista {
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .topo-direita {
+    justify-content: space-between;
+  }
+
+  .btn-hoje {
+    flex: 1 1 140px;
+    text-align: center;
+  }
+
+  .calendario-grid {
+    gap: 6px;
+    font-size: 0.95rem;
+  }
+
+  .calendario-dia {
+    padding: 8px 6px;
+  }
+
+  .mini-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .mini-header .mini-toggle {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .calendario-container {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .calendario-topo {
+    gap: 10px;
+  }
+
+  .topo-direita {
+    gap: 6px;
+  }
+
+  .btn-hoje,
+  .mini-header .mini-toggle {
+    flex: 1 1 120px;
+  }
+
+  .evento-card {
+    font-size: 0.95rem;
+  }
+
+  .evento-item {
+    gap: 6px;
+  }
 }

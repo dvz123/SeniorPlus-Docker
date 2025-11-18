@@ -14,28 +14,6 @@ import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useEffect } from 'react';
 
-// Simple helper to log when a section mounts (dev/debug only)
-function withLogging(Component, name) {
-  return function Wrapped(props) {
-    useEffect(() => {
-      // eslint-disable-next-line no-console
-      console.log(`[tela-landing] mounted: ${name}`);
-    }, []);
-    return <Component {...props} />;
-  };
-}
-
-const HeaderL = withLogging(Header, 'Header');
-const HeroL = withLogging(Hero, 'Hero');
-const TechStackL = withLogging(TechStack, 'TechStack');
-const TargetAudienceL = withLogging(TargetAudience, 'TargetAudience');
-const FeaturesL = withLogging(Features, 'Features');
-const PricingL = withLogging(Pricing, 'Pricing');
-const AgingStatsL = withLogging(AgingStats, 'AgingStats');
-const PartnershipsL = withLogging(Partnerships, 'Partnerships');
-const CTAL = withLogging(CTA, 'CTA');
-const FooterL = withLogging(Footer, 'Footer');
-
 function App() {
   useEffect(() => {
     document.body.classList.add('landing-body');
@@ -64,17 +42,17 @@ function App() {
   return (
   <div className="landing-root App">
       <ErrorBoundary>
-        <HeaderL />
-        <HeroL />
-        <TechStackL />
-        <TargetAudienceL />
-  <FeaturesL />
-  <About />
-  <PricingL />
-        <AgingStatsL />
-        <PartnershipsL />
-        <CTAL />
-        <FooterL />
+          <Header />
+          <Hero />
+          <TechStack />
+          <TargetAudience />
+          <Features />
+          <About />
+          <Pricing />
+          <AgingStats />
+          <Partnerships />
+          <CTA />
+          <Footer />
       </ErrorBoundary>
     </div>
   );

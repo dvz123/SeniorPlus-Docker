@@ -7,6 +7,16 @@
   margin: 0 auto;
 }
 
+.spinner {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .emergency-section {
   display: flex;
   flex-direction: column;

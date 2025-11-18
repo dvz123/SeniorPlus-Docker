@@ -7,6 +7,7 @@ import org.example.seniorplus.domain.ContatoEmergencia;
 import org.example.seniorplus.repository.ContatoEmergenciaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ContatoEmergenciaService {
@@ -18,12 +19,14 @@ public class ContatoEmergenciaService {
         return repository.findByIdosoCpfOrderByNomeAsc(normalizarCpf(cpf));
     }
 
+    @Transactional
     public ContatoEmergencia salvar(String cpf, ContatoEmergencia contato) {
         contato.setId(null);
         contato.setIdosoCpf(normalizarCpf(cpf));
         return repository.save(contato);
     }
 
+    @Transactional
     public ContatoEmergencia atualizar(String cpf, Long id, ContatoEmergencia contato) {
         ContatoEmergencia existente = repository.findById(id)
             .filter(c -> normalizarCpf(c.getIdosoCpf()).equals(normalizarCpf(cpf)))
@@ -36,6 +39,7 @@ public class ContatoEmergenciaService {
         return repository.save(existente);
     }
 
+    @Transactional
     public void remover(String cpf, Long id) {
         repository.deleteByIdAndIdosoCpf(id, normalizarCpf(cpf));
     }

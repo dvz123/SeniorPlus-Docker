@@ -17,8 +17,11 @@ public class MensagemController {
     private MensagemService mensagemService;
 
     @GetMapping
-    public ResponseEntity<List<MensagemResponse>> getMensagensDoIdoso(@RequestParam("idosoCpf") String cpf) {
-        List<MensagemResponse> mensagens = mensagemService.getMensagensDoIdoso(cpf);
+    public ResponseEntity<List<MensagemResponse>> getMensagensDoIdoso(
+            @RequestParam(value = "idosoCpf", required = false) String cpf,
+            @RequestParam(value = "idosoId", required = false) String id) {
+
+        List<MensagemResponse> mensagens = mensagemService.getMensagensDoIdoso(cpf, id);
         return ResponseEntity.ok(mensagens);
     }
 

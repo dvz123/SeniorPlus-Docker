@@ -804,11 +804,14 @@ function AtualizarDados() {
                 <input
                   type="text"
                   name="fotoUrl"
-                  placeholder="Ou informe uma URL pública"
+                  placeholder="Ou cole aqui o link direto da imagem (https://...)"
                   value={formData.fotoUrl}
                   onChange={handleChange}
                 />
-                <p className="helper-text">Aceita imagens até 2 MB nos formatos PNG, JPG ou WEBP.</p>
+                <p className="helper-text">
+                  Clique em "Selecionar imagem" para escolher um arquivo (PNG, JPG ou WEBP de até 2MB) ou cole um link
+                  público acima. Assim que a imagem for carregada, a pré-visualização aparece automaticamente.
+                </p>
               </div>
             </div>
           </div>

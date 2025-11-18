@@ -8,18 +8,20 @@ public class MensagemResponse {
     private String remetente;
     private String destinatario;
     private String idosoCpf;
+    private String idosoId;
     private boolean lida;
     private LocalDateTime dataHora;
 
     public MensagemResponse() {}
 
     public MensagemResponse(Long id, String conteudo, String remetente, String destinatario,
-                            String idosoCpf, boolean lida, LocalDateTime dataHora) {
+                            String idosoCpf, String idosoId, boolean lida, LocalDateTime dataHora) {
         this.id = id;
         this.conteudo = conteudo;
         this.remetente = remetente;
         this.destinatario = destinatario;
         this.idosoCpf = idosoCpf;
+        this.idosoId = idosoId;
         this.lida = lida;
         this.dataHora = dataHora;
     }
@@ -29,6 +31,7 @@ public class MensagemResponse {
     public String getRemetente() { return remetente; }
     public String getDestinatario() { return destinatario; }
     public String getIdosoCpf() { return idosoCpf; }
+    public String getIdosoId() { return idosoId; }
     public boolean isLida() { return lida; }
     public LocalDateTime getDataHora() { return dataHora; }
 
@@ -37,6 +40,7 @@ public class MensagemResponse {
     public void setRemetente(String remetente) { this.remetente = remetente; }
     public void setDestinatario(String destinatario) { this.destinatario = destinatario; }
     public void setIdosoCpf(String idosoCpf) { this.idosoCpf = idosoCpf; }
+    public void setIdosoId(String idosoId) { this.idosoId = idosoId; }
     public void setLida(boolean lida) { this.lida = lida; }
     public void setDataHora(LocalDateTime dataHora) { this.dataHora = dataHora; }
 }

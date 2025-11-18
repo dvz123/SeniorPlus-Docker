@@ -1,0 +1,24 @@
+{
+  "properties": [
+    {
+      "name": "zap.whatsapp.apiKey",
+      "type": "java.lang.String",
+      "description": "API key for the WhatsApp integration used to trigger caregiver notifications."
+    },
+    {
+      "name": "zap.whatsapp.telefone",
+      "type": "java.lang.String",
+      "description": "Fallback phone number used when WhatsApp notifications are triggered without an explicit recipient."
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "Secret used to sign Senior+ JWT tokens; provide a secure value via the environment."
+    },
+    {
+      "name": "jwt.expiration-minutes",
+      "type": "java.lang.Integer",
+      "description": "Default token lifetime in minutes for Senior+ JWT tokens."
+    }
+  ]
+}

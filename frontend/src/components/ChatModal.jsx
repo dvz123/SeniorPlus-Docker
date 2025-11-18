@@ -1,27 +1,100 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { useUser } from "../tela-cuidador/src/contexts/UserContext"
 import { useAuth } from "../tela-auth/src/contexts/AuthContext"
 import { useTheme } from "../contexts/ThemeContext" 
 import { useChat } from "../contexts/ChatContext"
 import { api } from "../tela-auth/src/services/api"
+import {
+    normalizeIdentifierDigits,
+    collectStoredResidentEntries,
+    collectIdentitySources,
+    resolveResidentCpf,
+    resolveResidentId,
+    mergeIdentityRecords,
+} from "../utils/chatIdentity"
 import "../styles/ChatModal.css"
+
+const CHAT_TIMEZONE = "America/Sao_Paulo"
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 function ChatModal() {
     const [messages, setMessages] = useState([])
     const [newMessage, setNewMessage] = useState("")
     const [isTyping] = useState(false)
     const messagesEndRef = useRef(null)
+    const isFetchingMessagesRef = useRef(false)
     const { elderlyData, isCareGiver } = useUser()
     const { currentUser } = useAuth()
     const { darkMode } = useTheme() 
     const { isOpen, closeChat } = useChat()
 
     const [loadingMessages, setLoadingMessages] = useState(false)
+    const [residentRecords, setResidentRecords] = useState(() => collectStoredResidentEntries())
+    const [selectedResidentKey, setSelectedResidentKey] = useState(() => {
+        if (typeof window === "undefined") return ""
+        return window.localStorage?.getItem?.("caregiverChatResidentKey") || ""
+    })
+
+    const timeFormatter = useMemo(
+        () => new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: CHAT_TIMEZONE }),
+        [],
+    )
+    const readableDateFormatter = useMemo(
+        () =>
+            new Intl.DateTimeFormat("pt-BR", {
+                weekday: "long",
+                day: "2-digit",
+                month: "long",
+                timeZone: CHAT_TIMEZONE,
+            }),
+        [],
+    )
+    const dateKeyFormatter = useMemo(
+        () => new Intl.DateTimeFormat("en-CA", { timeZone: CHAT_TIMEZONE }),
+        [],
+    )
 
     const normalizeActor = (value) => (value || "").toString().trim().toLowerCase()
-    const normalizeIdentifier = (value) => (value || "").toString().replace(/\D/g, "")
+    const normalizeIdentifier = (value) => normalizeIdentifierDigits(value)
+
+    const sanitizeMessage = useCallback((rawValue) => {
+        if (!rawValue) return ""
+        return rawValue
+            .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+    }, [])
+
+    const pickResidentName = (source) => {
+        if (!source || typeof source !== "object") return null
+        const keys = ["nome", "name", "displayName", "apelido", "firstName", "fullName"]
+        for (const key of keys) {
+            const value = source[key]
+            if (typeof value === "string" && value.trim()) {
+                return value.trim()
+            }
+        }
+        return null
+    }
+
+    const formatCpf = (value) => {
+        const digits = normalizeIdentifier(value)
+        if (!digits) return null
+        if (digits.length === 11) {
+            return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
+        }
+        return digits
+    }
+
+    const buildOptionLabel = (option) => {
+        if (!option) return ""
+        if (!option.cpf) return option.name
+        const formatted = formatCpf(option.cpf)
+        if (!formatted || formatted === option.name) return option.name
+        return `${option.name} (${formatted})`
+    }
 
     const isCurrentUser = (value) => {
         if (!value) return false
@@ -39,52 +112,247 @@ function ChatModal() {
             .some((candidate) => normalizeActor(candidate) === normalized)
     }
 
-    const resolveSenderRole = (rawSender, rawRecipient) => {
-        const normalizedSender = normalizeActor(rawSender)
-        const normalizedRecipient = normalizeActor(rawRecipient)
-
-        if (["caregiver", "cuidador", "cuidadora"].includes(normalizedSender)) {
-            return "caregiver"
-        }
-        if (["elderly", "idoso", "idosa"].includes(normalizedSender)) {
-            return "elderly"
-        }
-        if (isCurrentUser(rawSender)) {
-            return currentUser?.role || (isCareGiver() ? "caregiver" : "elderly")
-        }
-        if (isCurrentElderly(rawSender)) {
-            return "elderly"
-        }
-        if (isCurrentUser(rawRecipient)) {
-            return isCareGiver() ? "elderly" : "caregiver"
-        }
-        if (isCurrentElderly(rawRecipient)) {
-            return "caregiver"
-        }
-        return isCareGiver() ? "elderly" : "caregiver"
-    }
-
-    // Carregar mensagens do idoso selecionado quando o modal abrir
     useEffect(() => {
-        const loadMessages = async () => {
-            if (!isOpen) return
-            const activeIdentifier = {
-                cpf: elderlyData?.cpf || null,
-                id: elderlyData?.id || null,
-            }
+        const refreshFromStorage = () => {
+            const entries = collectStoredResidentEntries()
+            setResidentRecords((prev) => mergeIdentityRecords(prev, entries))
+        }
 
-            if (!activeIdentifier.cpf && !activeIdentifier.id) {
+        refreshFromStorage()
+
+        if (typeof window !== "undefined") {
+            window.addEventListener("storage", refreshFromStorage)
+            window.addEventListener("residentProfileUpdated", refreshFromStorage)
+        }
+
+        return () => {
+            if (typeof window !== "undefined") {
+                window.removeEventListener("storage", refreshFromStorage)
+                window.removeEventListener("residentProfileUpdated", refreshFromStorage)
+            }
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!elderlyData) return
+        setResidentRecords((prev) => mergeIdentityRecords(prev, [elderlyData]))
+    }, [elderlyData])
+
+    const identitySources = useMemo(() => {
+        const base = [
+            elderlyData,
+            currentUser?.assistedPerson,
+            currentUser?.elderlyProfile,
+            ...(residentRecords || []),
+        ]
+        return collectIdentitySources(base)
+    }, [elderlyData, currentUser, residentRecords])
+
+    const activeCpf = useMemo(() => resolveResidentCpf(identitySources), [identitySources])
+    const activeId = useMemo(() => resolveResidentId(identitySources), [identitySources])
+
+    const fallbackCpf = useMemo(() => {
+        const candidate =
+            elderlyData?.cpf ||
+            elderlyData?.documento ||
+            elderlyData?.document ||
+            elderlyData?.documentNumber ||
+            elderlyData?.cpfSelecionado ||
+            elderlyData?.cpfPaciente ||
+            elderlyData?.cpfIdoso ||
+            elderlyData?.cpf_responsavel
+        const digits = normalizeIdentifier(candidate)
+        return digits || null
+    }, [elderlyData])
+
+    const fallbackId = useMemo(() => {
+        const candidate =
+            elderlyData?.id ||
+            elderlyData?.idosoId ||
+            elderlyData?.identifier ||
+            elderlyData?.codigo ||
+            elderlyData?.pessoaId
+        if (candidate === undefined || candidate === null || candidate === "") {
+            return null
+        }
+        return String(candidate)
+    }, [elderlyData])
+
+    const caregiverCpf = useMemo(() => normalizeIdentifier(currentUser?.cpf), [currentUser?.cpf])
+    const caregiverId = useMemo(
+        () => (currentUser?.id !== undefined && currentUser?.id !== null ? String(currentUser.id) : null),
+        [currentUser?.id],
+    )
+
+    const residentOptions = useMemo(() => {
+        const options = []
+        const seenKeys = new Set()
+        identitySources.forEach((source, index) => {
+            if (!source || typeof source !== "object") return
+            const cpf = normalizeIdentifier(source.cpf || source.idosoCpf || source.documento)
+            const possibleId =
+                source.id ||
+                source.idosoId ||
+                source.idoso_id ||
+                (source.idoso && (source.idoso.id || source.idoso.cpf)) ||
+                source.identifier
+            const id = possibleId !== undefined && possibleId !== null && possibleId !== "" ? String(possibleId) : null
+            const key = cpf ? `cpf:${cpf}` : id ? `id:${id}` : `idx:${index}`
+            if (seenKeys.has(key)) return
+            const name = pickResidentName(source) || (cpf ? formatCpf(cpf) : `Idoso ${options.length + 1}`)
+            options.push({ key, name, cpf: cpf || null, id, source })
+            seenKeys.add(key)
+        })
+        return options
+    }, [identitySources])
+
+    useEffect(() => {
+        if (!residentOptions.length) return
+        if (selectedResidentKey && residentOptions.some((opt) => opt.key === selectedResidentKey)) return
+        setSelectedResidentKey(residentOptions[0]?.key || "")
+    }, [residentOptions, selectedResidentKey])
+
+    useEffect(() => {
+        if (typeof window === "undefined") return
+        if (selectedResidentKey) {
+            window.localStorage.setItem("caregiverChatResidentKey", selectedResidentKey)
+        } else {
+            window.localStorage.removeItem("caregiverChatResidentKey")
+        }
+    }, [selectedResidentKey])
+
+    const selectedResident = useMemo(
+        () => residentOptions.find((opt) => opt.key === selectedResidentKey) || null,
+        [residentOptions, selectedResidentKey],
+    )
+
+    const resolvedCpf = selectedResident?.cpf || activeCpf || fallbackCpf || null
+    const resolvedId = selectedResident?.id || activeId || fallbackId || null
+
+    const activeIdentifier = useMemo(
+        () => ({ cpf: resolvedCpf, id: resolvedId }),
+        [resolvedCpf, resolvedId],
+    )
+
+    const hasActiveTarget = Boolean(resolvedCpf || resolvedId)
+
+    useEffect(() => {
+        if (!isOpen) return
+        if (residentOptions.length > 0) return
+        let cancelled = false
+        const fetchDefaultResident = async () => {
+            try {
+                const response = await api.get("/api/v1/idoso/informacoesIdoso")
+                if (!response || cancelled) return
+                setResidentRecords((prev) => mergeIdentityRecords(prev, [response]))
+                if (typeof window !== "undefined") {
+                    try {
+                        window.localStorage.setItem("residentProfile", JSON.stringify(response))
+                        window.dispatchEvent(new Event("residentProfileUpdated"))
+                    } catch (storageError) {
+                        console.warn("Não foi possível armazenar o residente padrão", storageError)
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao buscar idoso vinculado para o chat:", error)
+            }
+        }
+        fetchDefaultResident()
+        return () => {
+            cancelled = true
+        }
+    }, [isOpen, residentOptions.length])
+
+    const handleResidentSelection = useCallback((event) => {
+        setSelectedResidentKey(event.target.value)
+    }, [])
+
+    const resolveSenderRole = useCallback(
+        (rawSender, rawRecipient) => {
+            const normalizedSender = normalizeActor(rawSender)
+            const normalizedRecipient = normalizeActor(rawRecipient)
+
+            if (["caregiver", "cuidador", "cuidadora"].includes(normalizedSender)) {
+                return "caregiver"
+            }
+            if (["elderly", "idoso", "idosa"].includes(normalizedSender)) {
+                return "elderly"
+            }
+            if (isCurrentUser(rawSender)) {
+                return currentUser?.role || (isCareGiver() ? "caregiver" : "elderly")
+            }
+            if (isCurrentElderly(rawSender)) {
+                return "elderly"
+            }
+            if (isCurrentUser(rawRecipient)) {
+                return isCareGiver() ? "elderly" : "caregiver"
+            }
+            if (isCurrentElderly(rawRecipient)) {
+                return "caregiver"
+            }
+            return isCareGiver() ? "elderly" : "caregiver"
+        },
+        [currentUser, isCareGiver, isCurrentElderly, isCurrentUser],
+    )
+
+    const residentName = useMemo(() => {
+        if (selectedResident?.name) return selectedResident.name
+        const prioritizedSources = []
+        identitySources.forEach((source) => {
+            if (!source || typeof source !== "object") return
+            const sourceCpf = normalizeIdentifier(source.cpf || source.idosoCpf || source.documento)
+            const possibleId =
+                source.id ||
+                source.idosoId ||
+                source.idoso_id ||
+                (source.idoso && (source.idoso.id || source.idoso.cpf)) ||
+                source.identifier
+            const normalizedId =
+                possibleId !== undefined && possibleId !== null ? String(possibleId) : null
+            if (resolvedCpf && sourceCpf && sourceCpf === resolvedCpf) {
+                prioritizedSources.push(source)
+                return
+            }
+            if (resolvedId && normalizedId && normalizedId === String(resolvedId)) {
+                prioritizedSources.push(source)
+            }
+        })
+
+        const orderedCandidates = [
+            ...prioritizedSources,
+            elderlyData,
+            ...(residentRecords || []),
+        ]
+
+        for (const candidate of orderedCandidates) {
+            const name = pickResidentName(candidate)
+            if (name) return name
+        }
+        return "Idoso"
+    }, [selectedResident, resolvedCpf, resolvedId, elderlyData, identitySources, residentRecords])
+
+    const fetchMessages = useCallback(
+        async ({ silent = false } = {}) => {
+            if (!isOpen) return
+            if (!hasActiveTarget) {
                 setMessages([])
+                setLoadingMessages(false)
                 return
             }
 
-            const activeCpf = normalizeIdentifier(activeIdentifier.cpf)
-            const activeId = activeIdentifier.id ? String(activeIdentifier.id) : null
+            if (isFetchingMessagesRef.current) {
+                return
+            }
+            isFetchingMessagesRef.current = true
+            if (!silent) {
+                setLoadingMessages(true)
+            }
 
-            setLoadingMessages(true)
+            const activeCpfDigits = resolvedCpf || null
+            const activeIdValue = resolvedId ? String(resolvedId) : null
+
             try {
                 const resp = await api.getMensagensDoIdoso(activeIdentifier)
-                // Espera-se que resp seja um array de mensagens; se não, tenta adaptar
                 const fetched = Array.isArray(resp) ? resp : resp.messages || []
 
                 const mapped = fetched
@@ -115,16 +383,16 @@ function ChatModal() {
                         }
                     })
                     .filter((msg) => {
-                        if (!activeCpf && !activeId) return true
+                        if (!activeCpfDigits && !activeIdValue) return true
                         const candidateCpfs = [msg.__normalizedCpf, msg.__fromCpfNormalized, msg.__toCpfNormalized]
                             .filter(Boolean)
-                        if (activeCpf && candidateCpfs.includes(activeCpf)) {
+                        if (activeCpfDigits && candidateCpfs.includes(activeCpfDigits)) {
                             return true
                         }
-                        if (activeId && (String(msg.toId) === activeId || String(msg.fromId) === activeId)) {
+                        if (activeIdValue && (String(msg.toId) === activeIdValue || String(msg.fromId) === activeIdValue)) {
                             return true
                         }
-                        return !activeCpf && candidateCpfs.length === 0
+                        return !activeCpfDigits && candidateCpfs.length === 0
                     })
 
                 setMessages((prev) => {
@@ -150,25 +418,33 @@ function ChatModal() {
                 })
             } catch (error) {
                 console.error('Erro ao carregar mensagens:', error)
-                setMessages([])
+                if (!silent) {
+                    setMessages([])
+                }
             } finally {
-                setLoadingMessages(false)
+                if (!silent) {
+                    setLoadingMessages(false)
+                }
+                isFetchingMessagesRef.current = false
             }
+        },
+        [isOpen, hasActiveTarget, resolvedCpf, resolvedId, activeIdentifier, resolveSenderRole],
+    )
+
+    useEffect(() => {
+        if (!isOpen) {
+            return undefined
         }
 
-        loadMessages()
-        // Polling para atualizar mensagens enquanto o modal estiver aberto
-        let interval = null
-        if (isOpen) {
-            interval = setInterval(() => {
-                loadMessages()
-            }, 10000)
-        }
+        fetchMessages()
+        const interval = setInterval(() => {
+            fetchMessages({ silent: true })
+        }, 5000)
 
         return () => {
-            if (interval) clearInterval(interval)
+            clearInterval(interval)
         }
-    }, [isOpen, elderlyData, currentUser, isCareGiver])
+    }, [fetchMessages, isOpen])
 
     // Listener para mensagens vindas de outros componentes (ex: tela-idoso)
     useEffect(() => {
@@ -176,26 +452,21 @@ function ChatModal() {
             const msg = e.detail
             if (!msg || !msg.id) return
 
-            const activeCpf = normalizeIdentifier(elderlyData?.cpf)
-            const activeId = elderlyData?.id ? String(elderlyData.id) : null
-            const caregiverCpf = normalizeIdentifier(currentUser?.cpf)
-            const caregiverId = currentUser?.id ? String(currentUser.id) : null
-
             const belongsToActiveChat = () => {
                 const msgCpfCandidates = [msg.idosoCpf, msg.toCpf, msg.fromCpf].map(normalizeIdentifier).filter(Boolean)
                 const msgIdCandidates = [msg.toId, msg.fromId].filter(Boolean).map((value) => String(value))
 
-                if (activeCpf && msgCpfCandidates.length > 0) {
-                    if (msgCpfCandidates.includes(activeCpf)) return true
+                if (resolvedCpf && msgCpfCandidates.length > 0) {
+                    if (msgCpfCandidates.includes(resolvedCpf)) return true
                     return false
                 }
 
-                if (activeId && msgIdCandidates.length > 0) {
-                    if (msgIdCandidates.includes(activeId)) return true
+                if (resolvedId && msgIdCandidates.length > 0) {
+                    if (msgIdCandidates.includes(resolvedId)) return true
                     return false
                 }
 
-                return !activeCpf && !activeId
+                return !resolvedCpf && !resolvedId
             }
 
             const addressesCurrentCaregiver = () => {
@@ -222,7 +493,7 @@ function ChatModal() {
 
         window.addEventListener('message:received', onRemoteMessage)
         return () => window.removeEventListener('message:received', onRemoteMessage)
-    }, [elderlyData, currentUser])
+    }, [resolvedCpf, resolvedId, caregiverCpf, caregiverId, elderlyData, currentUser])
 
     useEffect(() => {
         scrollToBottom()
@@ -234,36 +505,44 @@ function ChatModal() {
 
     const handleSendMessage = (e) => {
         e.preventDefault()
-        const targetIdentifier = {
-            cpf: elderlyData?.cpf || null,
-            id: elderlyData?.id || null,
+        const targetIdentifier = activeIdentifier
+        const sanitizedContent = sanitizeMessage(newMessage)
+        if (!sanitizedContent || !hasActiveTarget) {
+            return
         }
-        if (!newMessage.trim() || (!targetIdentifier.cpf && !targetIdentifier.id)) return
 
-        const caregiverCpf = normalizeIdentifier(currentUser?.cpf)
-        const fallbackCaregiverId = currentUser?.id ? String(currentUser.id) : null
-        const activeCpf = normalizeIdentifier(targetIdentifier.cpf)
-        const activeId = targetIdentifier.id ? String(targetIdentifier.id) : null
+        const caregiverCpfDigits = caregiverCpf
+        const fallbackCaregiverId = caregiverId
+        const activeCpfDigits = resolvedCpf || null
+        const activeIdValue = resolvedId ? String(resolvedId) : null
         // Monta payload conforme entidade Mensagem do backend
         const payload = {
-            conteudo: newMessage.trim(),
+            conteudo: sanitizedContent,
+            message: sanitizedContent,
+            texto: sanitizedContent,
             remetente: currentUser?.name || currentUser?.email || 'Desconhecido',
-            destinatario: elderlyData?.name || ('Idoso ' + (elderlyData?.id || '')),
+            destinatario: residentName,
         }
         if (elderlyData?.id) {
             payload.idoso = { id: elderlyData.id }
+        }
+        if (!payload.idoso && activeIdValue) {
+            payload.idoso = { id: activeIdValue }
+        }
+        if (activeCpfDigits) {
+            payload.idosoCpf = activeCpfDigits
         }
 
         // Otimista: adiciona à UI imediatamente no formato padronizado
         const optimistic = {
             id: `tmp_${Date.now()}`,
             fromId: currentUser?.id || null,
-            toId: elderlyData?.id || null,
-            fromCpf: caregiverCpf || fallbackCaregiverId,
-            toCpf: activeCpf || activeId,
-            idosoCpf: activeCpf || activeId,
+            toId: elderlyData?.id || activeIdValue,
+            fromCpf: caregiverCpfDigits || fallbackCaregiverId,
+            toCpf: activeCpfDigits || activeIdValue,
+            idosoCpf: activeCpfDigits || activeIdValue,
             senderRole: resolveSenderRole(payload.remetente, payload.destinatario),
-            message: payload.conteudo,
+            message: sanitizedContent,
             timestamp: new Date().toISOString(),
             read: false,
         }
@@ -280,9 +559,9 @@ function ChatModal() {
                         id: resp.id ?? optimistic.id,
                         fromId: resp.fromId || null,
                         toId: resp.toId || null,
-                        fromCpf: resp.fromCpf || caregiverCpf || fallbackCaregiverId,
-                        toCpf: resp.toCpf || activeCpf || activeId,
-                        idosoCpf: resp.idosoCpf || activeCpf || activeId,
+                        fromCpf: resp.fromCpf || caregiverCpfDigits || fallbackCaregiverId,
+                        toCpf: resp.toCpf || activeCpfDigits || activeIdValue,
+                        idosoCpf: resp.idosoCpf || activeCpfDigits || activeIdValue,
                         senderRole: resolveSenderRole(resp.remetente, resp.destinatario),
                         message: resp.conteudo || payload.conteudo,
                         timestamp: resp.dataHora || new Date().toISOString(),
@@ -295,6 +574,7 @@ function ChatModal() {
                     } catch (e) {
                         // noop
                     }
+                    await fetchMessages({ silent: true })
                 }
             } catch (error) {
                 console.error('Erro ao enviar mensagem:', error)
@@ -303,28 +583,35 @@ function ChatModal() {
         })()
     }
 
-    const formatTime = (timestamp) => {
-        const date = new Date(timestamp)
-        return date.toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit",
-        })
-    }
+    const formatTime = useCallback(
+        (timestamp) => {
+            const date = new Date(timestamp)
+            if (Number.isNaN(date.getTime())) return ""
+            return timeFormatter.format(date)
+        },
+        [timeFormatter],
+    )
 
-    const formatDate = (timestamp) => {
-        const date = new Date(timestamp)
-        const today = new Date()
-        const yesterday = new Date(today)
-        yesterday.setDate(yesterday.getDate() - 1)
+    const formatDate = useCallback(
+        (timestamp) => {
+            const date = new Date(timestamp)
+            if (Number.isNaN(date.getTime())) return ""
+            const messageKey = dateKeyFormatter.format(date)
+            const todayKey = dateKeyFormatter.format(new Date())
+            const yesterdayKey = dateKeyFormatter.format(new Date(Date.now() - ONE_DAY_MS))
 
-        if (date.toDateString() === today.toDateString()) {
-            return "Hoje"
-        } else if (date.toDateString() === yesterday.toDateString()) {
-            return "Ontem"
-        } else {
-            return date.toLocaleDateString("pt-BR")
-        }
-    }
+            if (messageKey === todayKey) {
+                return "Hoje"
+            }
+            if (messageKey === yesterdayKey) {
+                return "Ontem"
+            }
+
+            const formatted = readableDateFormatter.format(date)
+            return formatted ? formatted.charAt(0).toUpperCase() + formatted.slice(1) : ""
+        },
+        [dateKeyFormatter, readableDateFormatter],
+    )
 
     const groupMessagesByDate = (messages) => {
         const groups = {}
@@ -341,7 +628,7 @@ function ChatModal() {
     if (!isOpen) return null
 
     const messageGroups = groupMessagesByDate(messages)
-    const recipientName = elderlyData?.name || "Idoso"
+    const recipientName = residentName
 
     return (
         <div
@@ -370,6 +657,25 @@ function ChatModal() {
                         </svg>
                     </button>
                 </div>
+
+                {residentOptions.length > 0 && (
+                    <div className="chat-target-bar">
+                        <label htmlFor="chat-target-select">Conversar com</label>
+                        <select
+                            id="chat-target-select"
+                            className="chat-target-select"
+                            value={selectedResidentKey}
+                            onChange={handleResidentSelection}
+                            disabled={residentOptions.length <= 1}
+                        >
+                            {residentOptions.map((option) => (
+                                <option key={option.key} value={option.key}>
+                                    {buildOptionLabel(option)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 {/* Mensagens */}
                 <div className="chat-messages">
@@ -426,15 +732,15 @@ function ChatModal() {
                             type="text"
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder={elderlyData ? "Digite sua mensagem..." : "Selecione um idoso para iniciar o chat"}
+                            placeholder={hasActiveTarget ? "Digite sua mensagem..." : "Selecione um idoso para iniciar o chat"}
                             className="chat-input"
                             maxLength={500}
-                            disabled={!elderlyData}
+                            disabled={!hasActiveTarget}
                         />
                         <button
                             type="submit"
                             className="chat-send-button"
-                            disabled={!newMessage.trim() || !elderlyData}
+                            disabled={!newMessage.trim() || !hasActiveTarget}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor"

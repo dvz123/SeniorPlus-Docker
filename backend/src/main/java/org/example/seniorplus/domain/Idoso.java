@@ -60,7 +60,8 @@ public class Idoso extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String alergias;
 
-    @Column(name = "foto_url", length = 1024)
+    @Lob
+    @Column(name = "foto_url")
     private String fotoUrl;
 
     @Column(name = "nome_contato_emergencia", length = 150)
@@ -72,12 +73,12 @@ public class Idoso extends BaseEntity {
     @Column(length = 64)
     private String imc;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cuidador_cpf")
     @JsonIgnoreProperties({"enderecos", "hibernateLazyInitializer", "handler"})
     private Cuidador cuidador;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "idoso_id")
     private List<Endereco> enderecos = new ArrayList<>();
 

@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 
-const STORAGE_KEYS = ['elderlyProfile', 'elderlyData', 'idosoProfile', 'residentProfile']
+import {
+  collectIdentitySources,
+  collectStoredResidentEntries,
+  mergeIdentityRecords,
+  normalizeIdentifierDigits,
+  resolveResidentCpf,
+  resolveResidentId,
+} from '../../../utils/chatIdentity'
+
 const NAME_KEYS = ['nome', 'name', 'displayName', 'fullName', 'apelido', 'firstName']
 const AVATAR_KEYS = ['fotoUrl', 'photoUrl', 'avatarUrl', 'avatar', 'imageUrl', 'picture', 'foto']
-
-const safeParse = (value) => {
-  if (!value) return null
-  try {
-    return JSON.parse(value)
-  } catch (_) {
-    return null
-  }
-}
 
 const pickFirst = (source, keys) => {
   if (!source || typeof source !== 'object') return null
@@ -19,18 +18,6 @@ const pickFirst = (source, keys) => {
     const value = source[key]
     if (value && typeof value === 'string' && value.trim()) {
       return value
-    }
-  }
-  return null
-}
-
-const loadStoredProfile = () => {
-  if (typeof window === 'undefined') return null
-  for (const key of STORAGE_KEYS) {
-    const raw = window.localStorage?.getItem?.(key)
-    const parsed = safeParse(raw)
-    if (parsed) {
-      return parsed
     }
   }
   return null
@@ -45,12 +32,13 @@ const buildInitials = (name) => {
 }
 
 export const useResidentIdentity = ({ currentUser, fallbackProfile } = {}) => {
-  const [storedProfile, setStoredProfile] = useState(() => loadStoredProfile())
+  const [residentRecords, setResidentRecords] = useState(() => collectStoredResidentEntries())
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
     const refresh = () => {
-      setStoredProfile(loadStoredProfile())
+      const storedEntries = collectStoredResidentEntries()
+      setResidentRecords((prev) => mergeIdentityRecords(prev, storedEntries))
     }
     window.addEventListener('storage', refresh)
     window.addEventListener('residentProfileUpdated', refresh)
@@ -60,17 +48,52 @@ export const useResidentIdentity = ({ currentUser, fallbackProfile } = {}) => {
     }
   }, [])
 
-  const preferredProfile = useMemo(() => {
-    const candidates = [
+  const identitySources = useMemo(() => {
+    const baseSources = [
+      ...(residentRecords || []),
       fallbackProfile,
-      storedProfile,
       currentUser?.assistedPerson,
       currentUser?.elderlyProfile,
       currentUser?.profile,
       currentUser,
     ]
-    return candidates.find((candidate) => Boolean(pickFirst(candidate, NAME_KEYS))) || null
-  }, [fallbackProfile, storedProfile, currentUser])
+    return collectIdentitySources(baseSources)
+  }, [residentRecords, fallbackProfile, currentUser])
+
+  const resolvedCpf = useMemo(() => resolveResidentCpf(identitySources), [identitySources])
+  const resolvedId = useMemo(() => resolveResidentId(identitySources), [identitySources])
+
+  const candidateProfiles = useMemo(() => {
+    return [
+      ...(identitySources || []),
+      fallbackProfile,
+      currentUser?.assistedPerson,
+      currentUser?.elderlyProfile,
+      currentUser?.profile,
+      currentUser,
+    ].filter(Boolean)
+  }, [identitySources, fallbackProfile, currentUser])
+
+  const preferredProfile = useMemo(() => {
+    if (!candidateProfiles.length) return null
+    const matchesResolvedIdentity = (candidate) => {
+      if (!candidate) return false
+      const sources = collectIdentitySources([candidate])
+      const candidateCpf = resolveResidentCpf(sources)
+      const candidateId = resolveResidentId(sources)
+      if (resolvedCpf && candidateCpf && normalizeIdentifierDigits(candidateCpf) === resolvedCpf) {
+        return true
+      }
+      if (resolvedId && candidateId && String(candidateId) === String(resolvedId)) {
+        return true
+      }
+      return false
+    }
+
+    const matched = candidateProfiles.find(matchesResolvedIdentity)
+    if (matched) return matched
+    return candidateProfiles.find((candidate) => Boolean(pickFirst(candidate, NAME_KEYS))) || candidateProfiles[0] || null
+  }, [candidateProfiles, resolvedCpf, resolvedId])
 
   const name = useMemo(() => {
     return (
@@ -87,7 +110,14 @@ export const useResidentIdentity = ({ currentUser, fallbackProfile } = {}) => {
 
   const initials = useMemo(() => buildInitials(name), [name])
 
-  return { profile: preferredProfile, name, avatarUrl, initials }
+  return {
+    profile: preferredProfile,
+    name,
+    avatarUrl,
+    initials,
+    cpf: resolvedCpf || null,
+    residentId: resolvedId || null,
+  }
 }
 
 export default useResidentIdentity

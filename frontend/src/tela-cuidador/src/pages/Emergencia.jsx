@@ -1,13 +1,23 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useUser } from "../contexts/UserContext"
 import { useToast } from "../../../contexts/ToastContext"
 import { useNotification } from "../../../contexts/NotificationContext"
 import { useAuth } from "../../../tela-auth/src/contexts/AuthContext"
 import { api } from '../../../tela-auth/src/services/api'
-import { formatPhoneForWhatsApp, buildEmergencyContacts, buildEmergencyWhatsAppMessage } from '../../../utils/emergency'
+import {
+  formatPhoneForWhatsApp,
+  buildEmergencyContacts,
+  buildEmergencyWhatsAppMessage,
+  mergeEmergencyCustomContacts,
+  mapBackendEmergencyContact,
+  mapEmergencyContactToPayload,
+  normalizeCpf,
+  normalizeEmergencyContact,
+} from '../../../utils/emergency'
 import "../styles/Emergencia.css"
 import BackButton from "../../../components/BackButton"
 import { FaWhatsapp } from "react-icons/fa"
+import { Loader2 } from 'lucide-react'
 
 const EMERGENCY_ACTIONS = new Set([
   'ligacao',
@@ -31,16 +41,81 @@ function Emergencia() {
     const savedNumbers = localStorage.getItem("emergencyCustomNumbers")
     return savedNumbers ? JSON.parse(savedNumbers) : []
   })
+  const [remoteContacts, setRemoteContacts] = useState([])
+  const [loadingContacts, setLoadingContacts] = useState(false)
+  const [savingContact, setSavingContact] = useState(false)
+  const [removingContactId, setRemovingContactId] = useState(null)
   const [newNumber, setNewNumber] = useState({
     name: "",
     phone: "",
     description: "",
   })
 
-  const emergencyContacts = buildEmergencyContacts({
-    primaryContact: elderlyData?.emergencyContact,
-    primaryName: elderlyData?.emergencyContactName || elderlyData?.nomeContatoEmergencia,
-  })
+  const elderlyCpf = useMemo(
+    () =>
+      normalizeCpf(
+        elderlyData?.cpf ||
+          elderlyData?.documento ||
+          elderlyData?.cpfIdoso ||
+          elderlyData?.cpfPaciente ||
+          currentUser?.assistedPerson?.cpf ||
+          currentUser?.elderlyProfile?.cpf ||
+          currentUser?.cpfSelecionado,
+      ),
+    [elderlyData, currentUser],
+  )
+
+  const emitContactsUpdated = useCallback(() => {
+    if (typeof window === 'undefined') return
+    window.dispatchEvent(new Event('emergencyContactsUpdated'))
+  }, [])
+
+  const fetchRemoteContacts = useCallback(async () => {
+    if (!elderlyCpf) {
+      setRemoteContacts([])
+      return
+    }
+    setLoadingContacts(true)
+    try {
+      const response = await api.listEmergencyContacts(elderlyCpf)
+      const normalized = Array.isArray(response)
+        ? mergeEmergencyCustomContacts(response.map((item) => mapBackendEmergencyContact(item)))
+        : []
+      setRemoteContacts(normalized)
+    } catch (error) {
+      console.error('Falha ao carregar contatos de emergência', error)
+      if (showError) {
+        showError(error?.message || 'Não foi possível carregar os contatos cadastrados.')
+      }
+    } finally {
+      setLoadingContacts(false)
+    }
+  }, [elderlyCpf, showError])
+
+  useEffect(() => {
+    fetchRemoteContacts()
+  }, [fetchRemoteContacts])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const handleExternalUpdate = () => {
+      fetchRemoteContacts()
+    }
+    window.addEventListener('emergencyContactsUpdated', handleExternalUpdate)
+    return () => window.removeEventListener('emergencyContactsUpdated', handleExternalUpdate)
+  }, [fetchRemoteContacts])
+
+  const emergencyContacts = useMemo(
+    () =>
+      buildEmergencyContacts({
+        primaryContact: elderlyData?.emergencyContact,
+        primaryName: elderlyData?.emergencyContactName || elderlyData?.nomeContatoEmergencia,
+        customContacts: mergeEmergencyCustomContacts(remoteContacts, customNumbers),
+      }),
+    [elderlyData, remoteContacts, customNumbers],
+  )
+
+  const managedContacts = elderlyCpf ? remoteContacts : customNumbers
 
   const emergencyNotifications = notifications.filter((notification) =>
     EMERGENCY_ACTIONS.has(notification?.data?.action),
@@ -169,28 +244,77 @@ function Emergencia() {
     }))
   }
 
-  const handleSaveNumber = () => {
+  const handleSaveNumber = async () => {
     if (!newNumber.name || !newNumber.phone) {
       showError("Nome e telefone são obrigatórios!")
       return
     }
 
-    const newCustomNumber = {
-      id: Date.now(),
-      ...newNumber,
+    if (!elderlyCpf) {
+      const localContact = normalizeEmergencyContact({
+        id: `custom_${Date.now()}`,
+        name: newNumber.name,
+        phone: newNumber.phone,
+        relation: 'Personalizado',
+        description: newNumber.description,
+      })
+      setCustomNumbers((prev) => mergeEmergencyCustomContacts(prev, localContact))
+      setShowAddNumberForm(false)
+      setNewNumber({ name: "", phone: "", description: "" })
+      showSuccess("Número salvo localmente!")
+      notifyEmergencyAction({ action: 'contato-adicionado', contact: localContact, status: 'success' })
+      emitContactsUpdated()
+      return
     }
 
-    setCustomNumbers((prev) => [...prev, newCustomNumber])
-    setShowAddNumberForm(false)
-    showSuccess("Número adicionado com sucesso!")
-    notifyEmergencyAction({ action: 'contato-adicionado', contact: newCustomNumber, status: 'success' })
+    setSavingContact(true)
+    try {
+      const payload = mapEmergencyContactToPayload({
+        name: newNumber.name,
+        phone: newNumber.phone,
+        relation: 'Personalizado',
+        description: newNumber.description,
+      })
+      const created = await api.createEmergencyContact(elderlyCpf, payload)
+      const normalized = mapBackendEmergencyContact(created)
+      setRemoteContacts((prev) => mergeEmergencyCustomContacts(prev, normalized))
+      showSuccess("Contato sincronizado com sucesso!")
+      notifyEmergencyAction({ action: 'contato-adicionado', contact: normalized, status: 'success' })
+      setShowAddNumberForm(false)
+      setNewNumber({ name: "", phone: "", description: "" })
+      emitContactsUpdated()
+    } catch (error) {
+      console.error('Falha ao salvar contato remoto', error)
+      showError(error?.message || "Não foi possível salvar o contato agora.")
+    } finally {
+      setSavingContact(false)
+    }
   }
 
-  const handleDeleteNumber = (id) => {
-    const removed = customNumbers.find((number) => number.id === id)
-    setCustomNumbers((prev) => prev.filter((number) => number.id !== id))
+  const handleDeleteNumber = async (contact) => {
+    if (!contact) return
+
+    if (contact.backendId && elderlyCpf) {
+      setRemovingContactId(contact.id)
+      try {
+        await api.deleteEmergencyContact(elderlyCpf, contact.backendId)
+        setRemoteContacts((prev) => prev.filter((item) => item.backendId !== contact.backendId))
+        showSuccess("Contato removido com sucesso!")
+        notifyEmergencyAction({ action: 'contato-removido', contact })
+        emitContactsUpdated()
+      } catch (error) {
+        console.error('Falha ao remover contato remoto', error)
+        showError(error?.message || "Não foi possível remover o contato agora.")
+      } finally {
+        setRemovingContactId(null)
+      }
+      return
+    }
+
+    setCustomNumbers((prev) => prev.filter((number) => String(number.id) !== String(contact.id)))
     showSuccess("Número removido com sucesso!")
-    if (removed) notifyEmergencyAction({ action: 'contato-removido', contact: removed })
+    notifyEmergencyAction({ action: 'contato-removido', contact })
+    emitContactsUpdated()
   }
 
   return (
@@ -440,24 +564,42 @@ function Emergencia() {
           <div className="custom-numbers-section">
             <div className="custom-numbers-header">
               <h2>Meus Números Importantes</h2>
-              <button className="add-number-btn" onClick={handleAddNumber}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                {showAddNumberForm ? "Cancelar" : "Adicionar Número"}
-              </button>
+              <div className="custom-numbers-actions">
+                {elderlyCpf && (
+                  <button
+                    type="button"
+                    className="add-number-btn"
+                    onClick={fetchRemoteContacts}
+                    disabled={loadingContacts}
+                  >
+                    {loadingContacts ? <Loader2 size={16} className="spinner" /> : "Atualizar"}
+                  </button>
+                )}
+                <button type="button" className="add-number-btn" onClick={handleAddNumber}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  {showAddNumberForm ? "Cancelar" : "Adicionar Número"}
+                </button>
+              </div>
             </div>
+
+            {!elderlyCpf && (
+              <p className="custom-number-hint">
+                Cadastre o CPF do idoso para sincronizar automaticamente esses contatos com o aplicativo do assistido.
+              </p>
+            )}
 
             {showAddNumberForm && (
               <div className="add-number-form">
@@ -496,21 +638,27 @@ function Emergencia() {
                   ></textarea>
                 </div>
                 <div className="form-actions">
-                  <button className="cancel-btn" onClick={handleAddNumber}>
+                  <button type="button" className="cancel-btn" onClick={handleAddNumber}>
                     Cancelar
                   </button>
-                  <button className="save-btn" onClick={handleSaveNumber}>
-                    Salvar
+                  <button
+                    type="button"
+                    className="save-btn"
+                    onClick={handleSaveNumber}
+                    disabled={savingContact}
+                  >
+                    {savingContact ? <Loader2 size={16} className="spinner" /> : "Salvar"}
                   </button>
                 </div>
               </div>
             )}
 
-            {customNumbers.length > 0 ? (
+            {managedContacts.length > 0 ? (
               <div className="custom-numbers-grid">
-                {customNumbers.map((number) => (
-                  <div key={number.id} className="custom-number-card">
+                {managedContacts.map((number) => (
+                  <div key={number.id || number.phone} className="custom-number-card">
                     <h3 className="custom-number-name">{number.name}</h3>
+                    {number.relation && <p className="emergency-contact-relation">{number.relation}</p>}
                     <p className="custom-number-phone">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -529,10 +677,7 @@ function Emergencia() {
                     </p>
                     {number.description && <p className="custom-number-description">{number.description}</p>}
                     <div className="custom-number-actions">
-                      <button
-                        className="custom-number-call"
-                        onClick={() => handleEmergencyCall({ name: number.name, phone: number.phone })}
-                      >
+                      <button className="custom-number-call" onClick={() => handleEmergencyCall(number)}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -550,31 +695,36 @@ function Emergencia() {
                       </button>
                       <button
                         className="custom-number-whatsapp"
-                        onClick={() => handleSendWhatsApp({ name: number.name, phone: number.phone })}
+                        onClick={() => handleSendWhatsApp(number)}
                         title="Enviar WhatsApp"
                       >
                         <FaWhatsapp size={16} />
                       </button>
                       <button
                         className="custom-number-delete"
-                        onClick={() => handleDeleteNumber(number.id)}
+                        onClick={() => handleDeleteNumber(number)}
                         title="Excluir"
+                        disabled={removingContactId === number.id}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M3 6h18" />
-                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                        </svg>
+                        {removingContactId === number.id ? (
+                          <Loader2 size={16} className="spinner" />
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                          </svg>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -582,7 +732,11 @@ function Emergencia() {
               </div>
             ) : (
               <div className="no-custom-numbers">
-                <p>Você ainda não adicionou números personalizados.</p>
+                <p>
+                  {elderlyCpf
+                    ? "Nenhum contato adicional cadastrado ainda."
+                    : "Você ainda não adicionou números personalizados."}
+                </p>
                 <p>Clique em "Adicionar Número" para começar.</p>
               </div>
             )}

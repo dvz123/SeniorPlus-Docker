@@ -9,10 +9,12 @@ import { MessageCircle } from 'lucide-react';
 const PainelPrincipal = () => {
   const { openChat } = useChat();
   const agora = new Date();
+  const resolvedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
 
   const horaAtual = agora.toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: resolvedTimeZone,
   });
 
   const dataFormatada = agora.toLocaleDateString('pt-BR', {
@@ -20,6 +22,7 @@ const PainelPrincipal = () => {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+    timeZone: resolvedTimeZone,
   });
 
   return (
@@ -28,7 +31,7 @@ const PainelPrincipal = () => {
       <div className="painel-topo">
         <div className="hora">
           <FaClock size={18} />
-          <span className="hora-atual">{horaAtual}</span>
+          <span className="hora-atual" data-timezone={resolvedTimeZone}>{horaAtual}</span>
         </div>
         <div className="data">{dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1)}</div>
       </div>
