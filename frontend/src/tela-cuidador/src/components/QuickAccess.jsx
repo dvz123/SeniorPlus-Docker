@@ -35,7 +35,7 @@ function QuickAccess() {
               .map((part) => part[0])
               .join("")
               .substring(0, 2)
-              .toUpperCase() || "CU"}
+              .toUpperCase() || "ES"}
           </div>
         </div>
         <div className="caregiver-card-body">

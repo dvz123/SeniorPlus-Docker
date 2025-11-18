@@ -374,7 +374,7 @@ const FamilyChat = () => {
   );
 
   const caregiverInitials = useMemo(() => {
-    if (!caregiver?.nome) return "CU";
+    if (!caregiver?.nome) return "ES";
     return caregiver.nome
       .trim()
       .split(/\s+/)

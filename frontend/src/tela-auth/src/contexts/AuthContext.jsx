@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react"
 import { api } from '../services/api'
+import { clearUserScopedStorage } from '../../../utils/storageCleanup'
 
 const AuthContext = createContext()
 
@@ -90,6 +91,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('authToken', token)
         api.setAuthToken(token)
 
+        // limpar caches específicos do usuário anterior antes de hidratar o novo contexto
+        clearUserScopedStorage()
+
         // buscar dados do usuário
         const userResponse = await api.get('/api/v1/auth/conta')
         const userData = normalizeUser(userResponse)
@@ -135,6 +139,9 @@ export const AuthProvider = ({ children }) => {
       // Persistir token e configurar wrapper
       localStorage.setItem('authToken', token)
       api.setAuthToken(token)
+
+      // Limpa caches antes de hidratar o novo usuário
+      clearUserScopedStorage()
 
       // Buscar dados completos do usuário
       const userInfoResponse = await api.get('/api/v1/auth/conta')
@@ -201,6 +208,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('idosoEmergencyNumbers')
       sessionStorage.removeItem('authToken')
       api.setAuthToken(null)
+      clearUserScopedStorage()
     } catch (error) {
       console.error('Erro no logout:', error)
     }

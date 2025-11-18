@@ -673,6 +673,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .custom-numbers-section h2 {
@@ -680,6 +682,14 @@
   font-weight: 700;
   color: #1e293b;
   margin: 0;
+}
+
+.custom-numbers-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .dark-mode .custom-numbers-section h2 {
@@ -709,8 +719,9 @@
 
 .custom-numbers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  align-items: stretch;
 }
 
 .custom-number-card {
@@ -722,6 +733,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 100%;
 }
 
 .custom-number-card:hover {
@@ -771,6 +783,12 @@
   display: flex;
   gap: 0.625rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.custom-number-call,
+.custom-number-whatsapp {
+  flex: 1 1 140px;
 }
 
 .custom-number-call {
@@ -1026,6 +1044,26 @@
     margin-top: 1rem;
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .custom-numbers-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .custom-numbers-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .custom-number-actions {
+    flex-direction: column;
+  }
+
+  .custom-number-call,
+  .custom-number-whatsapp {
+    width: 100%;
+    flex: 1 1 auto;
   }
 }
 

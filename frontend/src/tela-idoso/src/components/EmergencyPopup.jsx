@@ -28,7 +28,6 @@ export default function EmergencyPopup({ isOpen, onClose }) {
   const [loadingContacts, setLoadingContacts] = useState(false)
   const [submittingContact, setSubmittingContact] = useState(false)
   const [removingContactId, setRemovingContactId] = useState(null)
-  const storageKeys = useMemo(() => ['idosoEmergencyNumbers', 'emergencyCustomNumbers'], [])
 
   const residentIdentity = useResidentIdentity({ currentUser })
   const elderlyCpf = useMemo(
@@ -36,11 +35,27 @@ export default function EmergencyPopup({ isOpen, onClose }) {
     [residentIdentity?.cpf, currentUser?.cpf, currentUser?.assistedPerson?.cpf],
   )
 
+  const storageScope = useMemo(() => {
+    if (elderlyCpf) return `cpf:${elderlyCpf}`
+    if (residentIdentity?.residentId) return `id:${residentIdentity.residentId}`
+    if (currentUser?.id) return `user:${currentUser.id}`
+    return 'anon'
+  }, [elderlyCpf, residentIdentity?.residentId, currentUser?.id])
+
+  const scopedStorageKeys = useMemo(
+    () => [`idosoEmergencyNumbers:${storageScope}`, `emergencyCustomNumbers:${storageScope}`],
+    [storageScope],
+  )
+
+  const legacyStorageKeys = useMemo(() => ['idosoEmergencyNumbers', 'emergencyCustomNumbers'], [])
+
   const loadStoredCustomNumbers = useCallback(() => {
     if (typeof window === 'undefined') return []
     let collected = []
 
-    storageKeys.forEach((key) => {
+    const keysToInspect = [...new Set([...scopedStorageKeys, ...legacyStorageKeys])]
+
+    keysToInspect.forEach((key) => {
       try {
         const raw = window.localStorage?.getItem?.(key)
         if (!raw) return
@@ -52,7 +67,7 @@ export default function EmergencyPopup({ isOpen, onClose }) {
     })
 
     return collected
-  }, [storageKeys])
+  }, [scopedStorageKeys, legacyStorageKeys])
 
   const [localContacts, setLocalContacts] = useState(() => loadStoredCustomNumbers())
   const [remoteContacts, setRemoteContacts] = useState([])
@@ -98,11 +113,22 @@ export default function EmergencyPopup({ isOpen, onClose }) {
     if (typeof window === 'undefined') return
     try {
       const serialized = JSON.stringify(localContacts)
-      storageKeys.forEach((key) => window.localStorage?.setItem?.(key, serialized))
+      scopedStorageKeys.forEach((key) => window.localStorage?.setItem?.(key, serialized))
     } catch (error) {
       // ignore persistence errors
     }
-  }, [localContacts, storageKeys])
+  }, [localContacts, scopedStorageKeys])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    legacyStorageKeys.forEach((key) => {
+      try {
+        window.localStorage?.removeItem?.(key)
+      } catch (_) {
+        // ignore
+      }
+    })
+  }, [legacyStorageKeys, storageScope])
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined

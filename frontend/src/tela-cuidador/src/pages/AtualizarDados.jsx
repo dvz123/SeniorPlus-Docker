@@ -27,6 +27,108 @@ const emptyForm = {
   contatoEmergencia: "",
 }
 
+const SUPPORTED_PHOTO_TYPES = ["image/png", "image/jpeg", "image/webp"]
+const MAX_PHOTO_FILE_SIZE = 2 * 1024 * 1024 // 2 MB em bytes
+const MAX_INLINE_IMAGE_BYTES = 1.8 * 1024 * 1024 // margem de segurança para envio em JSON
+const MAX_IMAGE_DIMENSION = 1024
+
+const extractBase64Payload = (value = "") => {
+  if (!value) return ""
+  const commaIndex = value.indexOf(",")
+  return commaIndex >= 0 ? value.slice(commaIndex + 1) : value
+}
+
+const estimateBase64Bytes = (value = "") => {
+  const payload = extractBase64Payload(value)
+  if (!payload) return 0
+  const padding = (payload.match(/=+$/) || [""])[0].length
+  return Math.ceil((payload.length * 3) / 4 - padding)
+}
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result)
+      } else {
+        reject(new Error("Não foi possível converter a imagem selecionada."))
+      }
+    }
+    reader.onerror = () => reject(reader.error || new Error("Falha ao carregar a imagem."))
+    reader.readAsDataURL(file)
+  })
+
+const scaleDimensions = (width, height, maxDimension) => {
+  if (!width || !height) {
+    return { width, height }
+  }
+  const largerSide = Math.max(width, height)
+  if (largerSide <= maxDimension) {
+    return { width, height }
+  }
+  const scale = maxDimension / largerSide
+  return {
+    width: Math.round(width * scale),
+    height: Math.round(height * scale),
+  }
+}
+
+const resizeDataUrl = (dataUrl, mimeType) =>
+  new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      resolve(dataUrl)
+      return
+    }
+    const image = new Image()
+    image.onload = () => {
+      const { width, height } = scaleDimensions(image.width, image.height, MAX_IMAGE_DIMENSION)
+      if (!width || !height) {
+        resolve(dataUrl)
+        return
+      }
+      if (width === image.width && height === image.height) {
+        resolve(dataUrl)
+        return
+      }
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext("2d")
+      if (!ctx) {
+        resolve(dataUrl)
+        return
+      }
+      ctx.drawImage(image, 0, 0, width, height)
+      const normalizedType = mimeType === "image/png" || mimeType === "image/webp" ? mimeType : "image/jpeg"
+      const quality = normalizedType === "image/png" ? undefined : 0.86
+      resolve(canvas.toDataURL(normalizedType, quality))
+    }
+    image.onerror = () => reject(new Error("Não foi possível processar a imagem."))
+    image.src = dataUrl
+  })
+
+const processPhotoFile = async (file) => {
+  const base64 = await readFileAsDataUrl(file)
+  try {
+    const optimized = await resizeDataUrl(base64, file.type)
+    return optimized
+  } catch (error) {
+    console.warn("Falha ao otimizar a imagem do idoso", error)
+    return base64
+  }
+}
+
+const persistResidentProfileCache = (record) => {
+  if (typeof window === "undefined" || !record) return
+  try {
+    window.localStorage.setItem("residentProfile", JSON.stringify(record))
+    window.dispatchEvent(new Event("residentProfileUpdated"))
+  } catch (error) {
+    console.warn("Não foi possível atualizar o cache local do perfil do idoso", error)
+  }
+}
+
 const calcularImc = (peso, alturaEmCm) => {
   const pesoNumero = parseFloat(peso)
   const alturaNumeroCm = parseFloat(alturaEmCm)
@@ -181,7 +283,17 @@ function AtualizarDados() {
   const [photoFileName, setPhotoFileName] = useState("")
 
   const handleChange = (event) => {
-    const { name, value } = event.target
+    const { name } = event.target
+    const rawValue = event.target.value
+    const value = name === "fotoUrl" ? rawValue.trim() : rawValue
+
+    if (name === "fotoUrl" && value && value.startsWith("data:image")) {
+      const approxBytes = estimateBase64Bytes(value)
+      if (approxBytes > MAX_INLINE_IMAGE_BYTES) {
+        showError?.("A imagem colada ultrapassa o limite permitido. Escolha um arquivo menor (até 1,8 MB).")
+        return
+      }
+    }
 
     setFormData((prev) => {
       const atualizado = {
@@ -207,49 +319,47 @@ function AtualizarDados() {
     }
   }
 
-  const openPhotoPicker = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handlePhotoUpload = (event) => {
+  const handlePhotoUpload = async (event) => {
     const file = event.target.files?.[0]
     if (!file) {
       return
     }
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/webp"]
-    if (!allowedTypes.includes(file.type)) {
-      if (showError) {
-        showError("Formato de imagem inválido. Utilize PNG, JPG ou WEBP.")
+    if (!SUPPORTED_PHOTO_TYPES.includes(file.type)) {
+      showError?.("Formato de imagem inválido. Utilize PNG, JPG ou WEBP.")
+      event.target.value = ""
+      setPhotoFileName("")
+      return
+    }
+
+    if (file.size > MAX_PHOTO_FILE_SIZE) {
+      showError?.("A imagem deve ter até 2 MB antes da otimização.")
+      event.target.value = ""
+      setPhotoFileName("")
+      return
+    }
+
+    try {
+      const optimizedDataUrl = await processPhotoFile(file)
+      const approxBytes = estimateBase64Bytes(optimizedDataUrl)
+      if (approxBytes > MAX_INLINE_IMAGE_BYTES) {
+        showError?.("Mesmo após otimizar, a imagem ficou grande demais. Escolha um arquivo menor (até 1,8 MB).")
+        event.target.value = ""
+        setPhotoFileName("")
+        return
       }
-      event.target.value = ""
-      setPhotoFileName("")
-      return
-    }
 
-    if (file.size > 2 * 1024 * 1024) {
-      showError?.("A imagem deve ter no máximo 2 MB.")
-      event.target.value = ""
-      setPhotoFileName("")
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : ""
       setFormData((prev) => ({
         ...prev,
-        fotoUrl: result,
+        fotoUrl: optimizedDataUrl,
       }))
       setPhotoFileName(file.name)
-    }
-    reader.onerror = () => {
-      console.error(reader.error)
-      showError?.("Não foi possível carregar a imagem selecionada.")
+    } catch (error) {
+      console.error("Erro ao processar imagem do idoso:", error)
+      showError?.("Não foi possível processar a imagem selecionada. Tente novamente com um arquivo menor.")
+      event.target.value = ""
       setPhotoFileName("")
     }
-
-    reader.readAsDataURL(file)
   }
 
   const handlePhotoRemoval = () => {
@@ -375,26 +485,37 @@ function AtualizarDados() {
 
     const jaVinculado = linkedIdosos.some((idoso) => idoso.cpf === cpfNormalizado)
 
+    if (payload.fotoUrl && payload.fotoUrl.startsWith("data:image")) {
+      const approxBytes = estimateBase64Bytes(payload.fotoUrl)
+      if (approxBytes > MAX_INLINE_IMAGE_BYTES) {
+        const mensagemErro = "A imagem selecionada ultrapassa o limite permitido. Escolha um arquivo menor (até 1,8 MB)."
+        setMensagem({ tipo: "error", texto: mensagemErro })
+        showError?.(mensagemErro)
+        return
+      }
+    }
+
     setSalvando(true)
 
     try {
+      let savedRecord = null
       if (jaVinculado) {
-        await api.put(`/api/v1/idoso/${cpfNormalizado}`, payload)
+        savedRecord = await api.put(`/api/v1/idoso/${cpfNormalizado}`, payload)
         const mensagemSucesso = "Dados do idoso atualizados com sucesso!"
         setMensagem({ tipo: "success", texto: mensagemSucesso })
-        if (showSuccess) {
-          showSuccess(mensagemSucesso)
-        }
+        showSuccess?.(mensagemSucesso)
       } else {
-        await api.post("/api/v1/idoso", payload)
+        savedRecord = await api.post("/api/v1/idoso", payload)
         const mensagemSucesso = "Idoso cadastrado e vinculado com sucesso!"
         setMensagem({ tipo: "success", texto: mensagemSucesso })
-        if (showSuccess) {
-          showSuccess(mensagemSucesso)
-        }
+        showSuccess?.(mensagemSucesso)
       }
 
-      if (updateElderlyData) {
+      if (savedRecord) {
+        setFormData(mapApiToForm(savedRecord))
+        persistResidentProfileCache(savedRecord)
+        updateElderlyData?.(mapApiToElderlyData(savedRecord))
+      } else if (updateElderlyData) {
         updateElderlyData(
           mapFormToElderlyData({
             ...formData,
@@ -404,7 +525,7 @@ function AtualizarDados() {
         )
       }
 
-      await carregarVinculos(cpfNormalizado)
+      await carregarVinculos(savedRecord?.cpf || cpfNormalizado)
     } catch (error) {
       console.error(error)
       const mensagemErro = error?.message || "Erro ao salvar os dados do idoso."
@@ -570,258 +691,269 @@ function AtualizarDados() {
               <input
                 id="cpfVincular"
                 type="text"
-                placeholder="Digite o CPF"
+                name="cpfVincular"
                 value={cpfParaVincular}
-                onChange={(e) => setCpfParaVincular(e.target.value)}
+                onChange={(event) => setCpfParaVincular(event.target.value)}
+                placeholder="Digite o CPF do idoso"
                 maxLength={18}
-                disabled={processandoVinculo}
               />
-              <button type="submit" className="primary-button" disabled={processandoVinculo}>
-                {processandoVinculo ? "Vinculando..." : "Vincular"}
+              <button type="submit" disabled={processandoVinculo}>
+                {processandoVinculo ? "Enviando..." : "Enviar solicitação"}
               </button>
             </div>
-            <p className="helper-text">Utilize esta opção quando o idoso já estiver cadastrado na plataforma.</p>
           </form>
         </section>
 
-        {mensagem && <p className={`mensagem ${mensagem.tipo}`}>{mensagem.texto}</p>}
+        <section className="update-form">
+          {mensagem ? (
+            <div className={`mensagem ${mensagem.tipo}`} role="status">
+              {mensagem.texto}
+            </div>
+          ) : null}
 
-        <form className="update-form" onSubmit={handleSubmit}>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="cpf">CPF</label>
-              <input
-                id="cpf"
-                type="text"
-                name="cpf"
-                value={formData.cpf}
-                onChange={handleChange}
-                required
-                maxLength={18}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="rg">RG</label>
-              <input
-                id="rg"
-                type="text"
-                name="rg"
-                value={formData.rg}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="nome">Nome</label>
-              <input
-                id="nome"
-                type="text"
-                name="nome"
-                value={formData.nome}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="dataNascimento">Data de Nascimento</label>
-              <input
-                id="dataNascimento"
-                type="date"
-                name="dataNascimento"
-                value={formData.dataNascimento}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="telefone">Telefone</label>
-              <input
-                id="telefone"
-                type="text"
-                name="telefone"
-                value={formData.telefone}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="idade">Idade</label>
-              <input
-                id="idade"
-                type="number"
-                name="idade"
-                min="0"
-                max="130"
-                value={formData.idade}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="genero">Gênero</label>
-              <select id="genero" name="genero" value={formData.genero} onChange={handleChange}>
-                <option value="">Selecione</option>
-                <option value="Feminino">Feminino</option>
-                <option value="Masculino">Masculino</option>
-                <option value="Não-binário">Não-binário</option>
-                <option value="Prefere não informar">Prefere não informar</option>
-                <option value="Outro">Outro</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="estadoCivil">Estado civil</label>
-              <select id="estadoCivil" name="estadoCivil" value={formData.estadoCivil} onChange={handleChange}>
-                <option value="">Selecione</option>
-                <option value="Solteiro(a)">Solteiro(a)</option>
-                <option value="Casado(a)">Casado(a)</option>
-                <option value="Divorciado(a)">Divorciado(a)</option>
-                <option value="Viúvo(a)">Viúvo(a)</option>
-                <option value="União estável">União estável</option>
-                <option value="Outro">Outro</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="nomeContatoEmergencia">Nome do contato de emergência</label>
-              <input
-                id="nomeContatoEmergencia"
-                type="text"
-                name="nomeContatoEmergencia"
-                placeholder="Quem deve ser avisado em emergências"
-                value={formData.nomeContatoEmergencia}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="contatoEmergencia">Telefone do contato de emergência</label>
-              <input
-                id="contatoEmergencia"
-                type="text"
-                name="contatoEmergencia"
-                placeholder="Ex: (11) 99999-9999"
-                value={formData.contatoEmergencia}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="peso">Peso (kg)</label>
-              <input
-                id="peso"
-                type="number"
-                step="0.01"
-                name="peso"
-                value={formData.peso}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="altura">Altura (cm)</label>
-              <input
-                id="altura"
-                type="number"
-                step="1"
-                name="altura"
-                value={formData.altura}
-                onChange={handleChange}
-              />
-              <div className="field-hint imc-hint" aria-live="polite">
-                IMC: {formData.imc || "—"}
+          <form className="idoso-form" onSubmit={handleSubmit}>
+            <div className="form-section">
+              <h2>Dados pessoais</h2>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="cpf">CPF</label>
+                  <input
+                    id="cpf"
+                    type="text"
+                    name="cpf"
+                    placeholder="000.000.000-00"
+                    value={formData.cpf}
+                    onChange={handleChange}
+                    maxLength={18}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="rg">RG</label>
+                  <input
+                    id="rg"
+                    type="text"
+                    name="rg"
+                    value={formData.rg}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="nome">Nome</label>
+                  <input
+                    id="nome"
+                    type="text"
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="email">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="telefone">Telefone</label>
+                  <input
+                    id="telefone"
+                    type="text"
+                    name="telefone"
+                    value={formData.telefone}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="dataNascimento">Data de Nascimento</label>
+                  <input
+                    id="dataNascimento"
+                    type="date"
+                    name="dataNascimento"
+                    value={formData.dataNascimento}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="idade">Idade</label>
+                  <input
+                    id="idade"
+                    type="number"
+                    name="idade"
+                    min="0"
+                    max="130"
+                    value={formData.idade}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="genero">Gênero</label>
+                  <select id="genero" name="genero" value={formData.genero} onChange={handleChange}>
+                    <option value="">Selecione</option>
+                    <option value="Feminino">Feminino</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Não-binário">Não-binário</option>
+                    <option value="Prefere não informar">Prefere não informar</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="estadoCivil">Estado civil</label>
+                  <select id="estadoCivil" name="estadoCivil" value={formData.estadoCivil} onChange={handleChange}>
+                    <option value="">Selecione</option>
+                    <option value="Solteiro(a)">Solteiro(a)</option>
+                    <option value="Casado(a)">Casado(a)</option>
+                    <option value="Divorciado(a)">Divorciado(a)</option>
+                    <option value="Viúvo(a)">Viúvo(a)</option>
+                    <option value="União estável">União estável</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
               </div>
             </div>
-            <div className="form-group">
-              <label htmlFor="tipoSanguineo">Tipo Sanguíneo</label>
-              <select
-                id="tipoSanguineo"
-                name="tipoSanguineo"
-                value={formData.tipoSanguineo}
-                onChange={handleChange}
-              >
-                <option value="">Selecione</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-              </select>
+
+            <div className="form-section">
+              <h2>Saúde e emergência</h2>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="peso">Peso (kg)</label>
+                  <input
+                    id="peso"
+                    type="number"
+                    step="0.01"
+                    name="peso"
+                    value={formData.peso}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="altura">Altura (cm)</label>
+                  <input
+                    id="altura"
+                    type="number"
+                    step="1"
+                    name="altura"
+                    value={formData.altura}
+                    onChange={handleChange}
+                  />
+                  <div className="field-hint imc-hint" aria-live="polite">
+                    IMC: {formData.imc || "—"}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="tipoSanguineo">Tipo sanguíneo</label>
+                  <select
+                    id="tipoSanguineo"
+                    name="tipoSanguineo"
+                    value={formData.tipoSanguineo}
+                    onChange={handleChange}
+                  >
+                    <option value="">Selecione</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="nomeContatoEmergencia">Contato de emergência</label>
+                  <input
+                    id="nomeContatoEmergencia"
+                    type="text"
+                    name="nomeContatoEmergencia"
+                    placeholder="Quem deve ser avisado em emergências"
+                    value={formData.nomeContatoEmergencia}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="contatoEmergencia">Telefone do contato</label>
+                  <input
+                    id="contatoEmergencia"
+                    type="text"
+                    name="contatoEmergencia"
+                    placeholder="Ex: (11) 99999-9999"
+                    value={formData.contatoEmergencia}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label htmlFor="observacao">Observações</label>
+                  <textarea
+                    id="observacao"
+                    name="observacao"
+                    rows="3"
+                    value={formData.observacao}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label htmlFor="alergias">Alergias</label>
+                  <textarea
+                    id="alergias"
+                    name="alergias"
+                    rows="3"
+                    placeholder="Informe alergias separadas por vírgula"
+                    value={formData.alergias}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="form-group full-width">
-              <label htmlFor="observacao">Observações</label>
-              <textarea
-                id="observacao"
-                name="observacao"
-                rows="3"
-                value={formData.observacao}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group full-width">
-              <label htmlFor="alergias">Alergias</label>
-              <textarea
-                id="alergias"
-                name="alergias"
-                rows="3"
-                placeholder="Informe alergias separadas por vírgula"
-                value={formData.alergias}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group full-width">
-              <label htmlFor="fotoIdoso">Foto do idoso</label>
-              <div className="photo-input">
-                {formData.fotoUrl ? (
-                  <div className="photo-preview">
+
+            <div className="form-section">
+              <h2>Foto do idoso</h2>
+              <div className="photo-field">
+                <label className="photo-input" aria-label="Enviar foto do idoso">
+                  {formData.fotoUrl ? (
                     <img src={formData.fotoUrl} alt="Pré-visualização do idoso" onError={handlePhotoRemoval} />
+                  ) : (
+                    <span className="photo-placeholder">Adicionar foto</span>
+                  )}
+                  <input
+                    id="fotoIdoso"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handlePhotoUpload}
+                  />
+                </label>
+
+                <div className="photo-actions">
+                  {formData.fotoUrl ? (
                     <button type="button" className="outline-button" onClick={handlePhotoRemoval}>
                       Remover foto
                     </button>
-                  </div>
-                ) : null}
+                  ) : null}
+                  {photoFileName ? (
+                    <span className="selected-photo-name" aria-live="polite">
+                      Arquivo selecionado: {photoFileName}
+                    </span>
+                  ) : null}
+                </div>
 
-                <button
-                  type="button"
-                  className="outline-button photo-upload-trigger"
-                  onClick={openPhotoPicker}
-                >
-                  {photoFileName ? "Trocar imagem" : "Selecionar imagem"}
-                </button>
-                {photoFileName && <span className="selected-photo-name">{photoFileName}</span>}
-                <input
-                  id="fotoIdoso"
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={handlePhotoUpload}
-                  className="photo-file-input"
-                />
-                <input
-                  type="text"
-                  name="fotoUrl"
-                  placeholder="Ou cole aqui o link direto da imagem (https://...)"
-                  value={formData.fotoUrl}
-                  onChange={handleChange}
-                />
                 <p className="helper-text">
-                  Clique em "Selecionar imagem" para escolher um arquivo (PNG, JPG ou WEBP de até 2MB) ou cole um link
-                  público acima. Assim que a imagem for carregada, a pré-visualização aparece automaticamente.
+                  Utilize arquivos PNG, JPG ou WEBP de até 2 MB. As imagens são otimizadas automaticamente para caber no prontuário.
                 </p>
               </div>
             </div>
-          </div>
 
-          <div className="form-actions">
-            <button type="submit" className="primary-button" disabled={salvando}>
-              {salvando ? "Salvando..." : "Salvar alterações"}
-            </button>
-          </div>
-        </form>
+            <div className="form-actions">
+              <button type="submit" className="primary-button" disabled={salvando}>
+                {salvando ? "Salvando..." : "Salvar alterações"}
+              </button>
+            </div>
+          </form>
+        </section>
       </main>
     </div>
   )
